@@ -91,6 +91,7 @@ extern "C" {
 #include "version.hpp"
 #include "vivify.hpp"
 #include "watch.hpp"
+#include "clause_lbd_stats.hpp"
 
 /*------------------------------------------------------------------------*/
 
@@ -216,6 +217,8 @@ struct Internal {
   Arena arena;                  // memory arena for moving garbage collector
   Format error_message;         // provide persistent error message
   string prefix;                // verbose messages prefix
+
+  LBDStats lbd_stats;           // Collect statistics about the lbd values of leanred clauses.
 
   Internal * internal;          // proxy to 'this' in macros
   External * external;          // proxy to 'external' buddy in 'Solver'

@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include <iostream>
 
 namespace CaDiCaL {
 
@@ -685,6 +686,19 @@ int Internal::lookahead () {
 void Internal::print_statistics () {
   stats.print (this);
   if (checker) checker->print_stats ();
+  for (auto c : this->lbd_stats.data) {
+
+    std::string vector_str = "[";
+
+    for (int lit : c.first) {
+      vector_str.append(std::to_string(lit));
+      vector_str.append(",");
+    }
+
+    vector_str.append("]");
+
+    MSG("cls = %s, count = %d, mean = %f, variance = %f", vector_str.c_str(), c.second.final_count(), c.second.final_mean(), c.second.final_variance());
+  }
 }
 
 /*------------------------------------------------------------------------*/
