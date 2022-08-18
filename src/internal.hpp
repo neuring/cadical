@@ -219,6 +219,8 @@ struct Internal {
   string prefix;                // verbose messages prefix
 
   LBDStats lbd_stats;           // Collect statistics about the lbd values of leanred clauses.
+  const char * lbd_socket_path;
+  int lbd_socket_fd;
 
   Internal * internal;          // proxy to 'this' in macros
   External * external;          // proxy to 'external' buddy in 'Solver'
@@ -703,6 +705,9 @@ struct Internal {
   void vivify_clause (Vivifier &, Clause * candidate);
   void vivify_round (bool redundant_mode, int64_t delta);
   void vivify ();
+
+  void init_lbd_aggregator();
+  void send_clause_to_aggregator(std::vector<int>& clause, int lbd);
 
   // Compacting (shrinking internal variable tables) in 'compact.cpp'
   //

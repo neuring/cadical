@@ -44,6 +44,5 @@ struct LBDStats {
 
         void update(std::vector<int> const& clause, int lbd_value);
 };
-
 }
 #endif

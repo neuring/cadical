@@ -720,7 +720,8 @@ void Internal::analyze () {
   int size = (int) clause.size ();
   const int glue = (int) levels.size () - 1;
   LOG (clause, "1st UIP size %d and glue %d clause", size, glue);
-  this->lbd_stats.update(clause, glue);
+  //this->lbd_stats.update(clause, glue);
+  this->send_clause_to_aggregator(clause, glue);
   UPDATE_AVERAGE (averages.current.glue.fast, glue);
   UPDATE_AVERAGE (averages.current.glue.slow, glue);
   stats.learned.literals += size;

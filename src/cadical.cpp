@@ -4,6 +4,7 @@
 
 #include "internal.hpp"
 #include "signal.hpp"           // Separate, only need for apps.
+#include <iostream>
 
 /*------------------------------------------------------------------------*/
 
@@ -413,7 +414,14 @@ int App::main (int argc, char ** argv) {
              !strcmp (argv[i], "--witness=false") ||
              !strcmp (argv[i], "--witness=0"))
       witness = false;
-    else if (!strcmp (argv[i], "--less")) {             // EXPERIMENTAL!
+    else if (!strcmp (argv[i], "--lbd-socket-path")) {
+      if (++i == argc) APPERR ("argument to '--lbd-socket-path' missing");
+      else {
+        std::cout << "lbd socket path found: " << argv[i] << std::endl;
+        this->solver->internal->lbd_socket_path = argv[i];
+        this->solver->internal->init_lbd_aggregator();
+      }
+    } else if (!strcmp (argv[i], "--less")) {             // EXPERIMENTAL!
       if (less) APPERR ("multiple '--less' options");
       else if (!isatty (1))
         APPERR ("'--less' without '<stdout>' connected to terminal");
