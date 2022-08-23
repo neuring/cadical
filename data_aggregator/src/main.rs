@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc, process::Stdio, cmp::Reverse};
+use std::{collections::HashMap, path::PathBuf, sync::Arc, process::Stdio};
 
 use anyhow::Context;
 use clap::Parser;
@@ -117,9 +117,11 @@ async fn data_aggregation_handler(mut receiver: mpsc::Receiver<ClauseData>, mut 
                 update_data_map(&mut data, &clause_data);
             }
             _ = tokio::signal::ctrl_c() =>  {
+                println!("Termination signal received");
                 return Ok(data);
             }
             _ = &mut finish => {
+                println!("Finished all runs");
                 return Ok(data);
             }
         }
@@ -138,7 +140,7 @@ async fn spawn_cadical(config: Arc<Config>, number: u32) -> anyhow::Result<()> {
         .args(&config.solver_flags)
         .stdout(Stdio::null());
 
-    let exit = cmd.status().await.context("Failed to execute cadical")?;
+    cmd.status().await.context("Failed to execute cadical")?;
 
     // Cadical returns 10 on success
     //if !exit.success() {
@@ -154,8 +156,8 @@ async fn cadical_spawner(config: Arc<Config>, finish: oneshot::Sender<()>) -> an
 
     let mut handles = Vec::new();
 
-    for i in 0..config.iterations {
-        println!("progress {}/{}", i + 1, config.iterations);
+    for i in 1..=config.iterations {
+        println!("progress {}/{}", i, config.iterations);
         let permit = sem.clone().acquire_owned().await.context("Error on semaphore acquire.")?;
         let config_clone = config.clone();
 
@@ -172,7 +174,7 @@ async fn cadical_spawner(config: Arc<Config>, finish: oneshot::Sender<()>) -> an
         handle.await?.context("Cadical invocation failed")?;
     }
 
-    finish.send(());
+    finish.send(()).unwrap();
 
     Ok(())
 }
@@ -202,7 +204,7 @@ async fn main() -> anyhow::Result<()> {
 
     let aggregator = data_aggregation_handler(receiver, finish_receiver);
 
-    let spawner_handle = tokio::spawn(cadical_spawner(config.clone(), finish_sender));
+    let _spawner_handle = tokio::spawn(cadical_spawner(config.clone(), finish_sender));
 
     let result = aggregator.await;
     let result = result.context("Data aggregation failed")?;
