@@ -1,8 +1,16 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc, process::Stdio};
+#![feature(once_cell)]
+
+use std::{collections::HashMap, path::PathBuf, sync::{Arc, Mutex}, process::Stdio, time::Duration, str::FromStr, sync::{LazyLock, MutexGuard}, fmt};
 
 use anyhow::Context;
 use clap::Parser;
+use sysinfo::{System, SystemExt, Pid, ProcessExt};
 use tokio::{net::{UnixStream, UnixListener}, io::{AsyncReadExt, BufReader, AsyncRead}, select, sync::{mpsc, oneshot, Semaphore}, process::Command};
+
+static SYSINFO: LazyLock<Mutex<System>> = LazyLock::new(|| {
+    let sys = System::new_all();
+    Mutex::new(sys)
+});
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -27,7 +35,42 @@ struct Config {
     #[clap(short, long, default_value="2")]
     parallel: u32,
 
+    /// How much memory can the combined cadical processes use max. (in mb)
+    #[clap(short, long, default_value_t)]
+    max_mem_usage: Memory,
+
     solver_flags: Vec<String>,
+}
+
+#[derive(Debug)]
+struct Memory {
+    kb: u64,
+}
+
+impl fmt::Display for Memory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mb : f32 = self.kb as f32 / 1024.;
+        write!(f, "{:.2}", mb)
+    }
+}
+
+impl FromStr for Memory {
+    type Err = <f32 as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let val = f32::from_str(s.trim())?;
+        Ok(Self { kb: (val * 1024.) as u64 })
+    }
+}
+
+impl Default for Memory {
+    fn default() -> Self {
+        let sys: &System = &*SYSINFO.lock().unwrap();
+
+        let memory = sys.total_memory();
+
+        Self { kb: memory }
+    }
 }
 
 #[derive(Debug)]
@@ -50,6 +93,8 @@ async fn read_clause(stream: &mut (impl AsyncRead + Unpin)) -> anyhow::Result<Cl
     }
 
     let lbd = stream.read_i32_le().await.context("Reading lbd value failed")?;
+
+    literals.sort_by_key(|lit| lit.abs());
     Ok(ClauseData{
         literals: literals.into_boxed_slice(), lbd
     })
@@ -140,8 +185,30 @@ async fn spawn_cadical(config: Arc<Config>, number: u32) -> anyhow::Result<()> {
         .args(&config.solver_flags)
         .stdout(Stdio::null());
 
-    cmd.status().await.context("Failed to execute cadical")?;
+    let mut child_handle = cmd.spawn().context("Couldn't spawn cadical child process")?;
+    let child_pid = Pid::from(child_handle.id().context("Child doesn't have pid")? as i32);
 
+    loop {
+        select! {
+            _ = child_handle.wait() => {
+                // Child process has finished
+                break
+            }
+            _ = tokio::time::sleep(Duration::from_secs(1)) => {
+                // Check if child process consumes too much memory, if so kill it
+                let memory_usage = {
+                    let mut sysinfo: MutexGuard<System> = SYSINFO.lock().unwrap();
+                    assert!(sysinfo.refresh_process(child_pid));
+                    sysinfo.process(child_pid).unwrap().memory()
+                };
+
+                if memory_usage > config.max_mem_usage.kb / config.parallel as u64 {
+                    child_handle.kill().await.context("Couldn't kill child that uses too much memory")?;
+                    println!("Cadical process used too much memory");
+                }
+            }
+        }
+    }
     // Cadical returns 10 on success
     //if !exit.success() {
     //    eprintln!("Exit code of cadical ({number}) is error.");
