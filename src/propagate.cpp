@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include<iostream>
 
 namespace CaDiCaL {
 
@@ -70,6 +71,7 @@ inline void Internal::search_assign (int lit, Clause * reason) {
   v.reason = reason;
   if (!lit_level) learn_unit_clause (lit);  // increases 'stats.fixed'
   const signed char tmp = sign (lit);
+  this->update_stability(idx);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);
@@ -151,6 +153,7 @@ bool Internal::propagate () {
   // delay until propagation ran to completion.
   //
   int64_t before = propagated;
+  int64_t propagations_on_imported_clauses = 0;
 
   while (!conflict && propagated != trail.size ()) {
 
@@ -197,7 +200,10 @@ bool Internal::propagate () {
         // there also only to simplify the code).
 
         if (b < 0) conflict = w.clause;          // but continue ...
-        else search_assign (w.blit, w.clause);
+        else {
+          search_assign (w.blit, w.clause);
+          if (w.clause->imported) propagations_on_imported_clauses += 1;
+        }
 
       } else {
 
@@ -288,6 +294,7 @@ bool Internal::propagate () {
             // assigned to false (still 'v < 0'), thus we found a unit.
             //
             search_assign (other, w.clause);
+            if (w.clause->imported) propagations_on_imported_clauses += 1;
 
             // Similar code is in the implementation of the SAT'18 paper on
             // chronological backtracking but in our experience, this code
@@ -359,6 +366,7 @@ bool Internal::propagate () {
     // Avoid updating stats eagerly in the hot-spot of the solver.
     //
     stats.propagations.search += propagated - before;
+    stats.import.propagations_on_imported_clauses += propagations_on_imported_clauses;
 
     if (!conflict) no_conflict_until = propagated;
     else {

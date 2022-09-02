@@ -215,6 +215,12 @@ struct Stats {
     int64_t pure;        // number of pure literals
   } all, now;
 
+  struct {
+    int64_t conflicts_on_imported_clauses;
+    int64_t propagations_on_imported_clauses;
+    int64_t imported_clauses;
+  } import;
+
   int64_t unused;        // number of unused variables
   int64_t active;        // number of active variables
   int64_t inactive;      // number of inactive variables

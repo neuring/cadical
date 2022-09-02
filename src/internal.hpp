@@ -34,6 +34,7 @@ extern "C" {
 #include <queue>
 #include <string>
 #include <vector>
+#include <numeric>
 
 /*------------------------------------------------------------------------*/
 
@@ -50,6 +51,7 @@ extern "C" {
 #include "bins.hpp"
 #include "block.hpp"
 #include "cadical.hpp"
+#include "cema.hpp"
 #include "checker.hpp"
 #include "clause.hpp"
 #include "config.hpp"
@@ -86,6 +88,7 @@ extern "C" {
 #include "stats.hpp"
 #include "terminal.hpp"
 #include "tracer.hpp"
+#include "trail_sample.hpp"
 #include "util.hpp"
 #include "var.hpp"
 #include "version.hpp"
@@ -159,6 +162,8 @@ struct Internal {
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
   signed char * vals;           // assignment [-max_var,max_var]
+  vector<CEMACollector> stability; // 
+  double stability_ema_alpha;  
   vector<signed char> marks;    // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'
@@ -944,6 +949,10 @@ struct Internal {
     bool failed_constraint(); // Was constraint used to proof unsatisfiablity?
     void reset_constraint();  // Reset after 'solve' call.
 
+    // Import learnt clauses from an external source.
+    bool importing ();
+    void import_redundant_clauses (int& res);
+
     // Forcing decision variables to a certain phase.
     //
     void phase(int lit);
@@ -1038,6 +1047,25 @@ struct Internal {
     void lookahead_generate_probes();
     std::vector<int> lookahead_populate_locc();
     int lookahead_locc(const std::vector<int> &);
+
+    // Trail Sampling
+    void update_stability(int var);
+    void update_stability_all_variables();
+
+    // Calculates an estimation of the probability that the given clause will become
+    // a conflict clause, based on the gathered stability.
+
+    double clause_conflict_heuristic_product_norm(std::vector<int>&);
+    double clause_conflict_heuristic_lukasiewicz(const std::vector<int>& clause);
+    double clause_conflict_heuristic_average(const std::vector<int>& clause);
+    double clause_conflict_heuristic_min(const std::vector<int>& clause);
+    double clause_conflict_heuristic_second_min(const std::vector<int>& clause);
+    int clause_conflict_heuristic_unstable_lits(const std::vector<int>& clause);
+    double clause_conflict_heuristic_generalized_unstable_lits(const std::vector<int>& clause);
+    double clause_conflict_heuristic_literal_score_sum(const std::vector<int>& clause);
+
+    bool is_lit_stable_false(const int lit);
+    bool is_lit_stable_true(const int lit);
 
     bool terminating_asked();
 

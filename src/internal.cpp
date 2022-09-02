@@ -50,6 +50,7 @@ Internal::Internal ()
   lits (this->max_var)
 {
   control.push_back (Level (0, 0));
+  this->stability_ema_alpha = 2./(this->opts.varemawindow + 1);
 }
 
 Internal::~Internal () {
@@ -124,6 +125,7 @@ void Internal::enlarge (int new_max_var) {
   // Ordered in the size of allocated memory (larger block first).
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
+  enlarge_init (stability, 2*new_vsize, CEMACollector());
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);
@@ -202,8 +204,9 @@ int Internal::cdcl_loop_with_inprocessing () {
     else if (iterating) iterate ();          // report learned unit
     else if (satisfied ()) res = 10;         // found model
     else if (search_limits_hit ()) break;    // decision or conflict limit
-    else if (terminated_asynchronously ())    // externally terminated
+    else if (terminated_asynchronously ())   // externally terminated
       break;
+    else if (importing ()) import_redundant_clauses (res);
     else if (restarting ()) restart ();      // restart by backtracking
     else if (rephasing ()) rephase ();       // reset variable phases
     else if (reducing ()) reduce ();         // collect useless clauses
@@ -239,7 +242,7 @@ void Internal::init_preprocessing_limits () {
   const bool incremental = lim.initialized;
   if (incremental)
     LOG ("reinitializing preprocessing limits incrementally");
-  else LOG ("initializing preprocessing limits and increments");
+  else LOG ("iClauseWithGlueessing limits and increments");
 
   const char * mode = 0;
 
@@ -597,6 +600,7 @@ int Internal::solve (bool preprocess_only) {
     if (!res) res = lucky_phases ();
     if (!res) res = cdcl_loop_with_inprocessing ();
   }
+
   reset_solving ();
   report_solving (res);
   STOP (solve);

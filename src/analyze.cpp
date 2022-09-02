@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include <iostream>
 
 namespace CaDiCaL {
 
@@ -691,6 +692,9 @@ void Internal::analyze () {
   // articulation points is not necessary.
   //
   Clause * reason = conflict;
+  if (reason->imported) {
+    this->stats.import.conflicts_on_imported_clauses += 1;
+  }
   LOG (reason, "analyzing conflict");
 
   assert (clause.empty ());
@@ -726,7 +730,6 @@ void Internal::analyze () {
   stats.learned.clauses++;
   assert (glue < size);
 
-
   // Minimize the 1st UIP clause as pioneered by Niklas Soerensson in
   // MiniSAT and described in our joint SAT'09 paper.
   //
@@ -743,7 +746,7 @@ void Internal::analyze () {
     if (opts.bump)
       bump_variables();
 
-    if (external->learner) external->export_learned_large_clause (clause);
+    if (external->learner) external->export_learned_large_clause (clause, glue);
   } else if (external->learner)
     external->export_learned_unit_clause(-uip);
 

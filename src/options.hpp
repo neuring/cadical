@@ -94,6 +94,8 @@ OPTION( flush,             0,  0,  1,0,0,1, "flush redundant clauses") \
 OPTION( flushfactor,       3,  1,1e3,0,0,1, "interval increase") \
 OPTION( flushint,        1e5,  1,2e9,0,0,1, "initial limit") \
 OPTION( forcephase,        0,  0,  1,0,0,1, "always use initial phase") \
+OPTION( importheuristic,   0,  0,100,0,0,1, "heuristic which chooses the remaining clauses after the selection heuristic to meet importpercent.") \
+OPTION( importpercent,   100,  0,100,0,0,1, "the percentage of literals to be imported.") \
 OPTION( inprocessing,      1,  0,  1,0,0,1, "enable inprocessing") \
 OPTION( instantiate,       0,  0,  1,0,1,1, "variable instantiation") \
 OPTION( instantiateclslim, 3,  2,2e9,0,0,1, "minimum clause size") \
@@ -144,6 +146,7 @@ OPTION( shuffle,           0,  0,  1,0,0,1, "shuffle variables") \
 OPTION( shufflequeue,      1,  0,  1,0,0,1, "shuffle variable queue") \
 OPTION( shufflerandom,     0,  0,  1,0,0,1, "not reverse but random") \
 OPTION( shufflescores,     1,  0,  1,0,0,1, "shuffle variable scores") \
+OPTION( stabilitythreshold, 99,  0,  100,0,0,1, "enable stabilizing phases") \
 OPTION( stabilize,         1,  0,  1,0,0,1, "enable stabilizing phases") \
 OPTION( stabilizefactor, 200,101,2e9,0,0,1, "phase increase in percent") \
 OPTION( stabilizeint,    1e3,  1,2e9,0,0,1, "stabilizing interval") \
@@ -172,6 +175,8 @@ OPTION( transred,          1,  0,  1,0,1,1, "transitive reduction of BIG") \
 OPTION( transredmaxeff,  1e8,  0,2e9,1,0,1, "maximum efficiency") \
 OPTION( transredmineff,  1e6,  0,2e9,1,0,1, "minimum efficiency") \
 OPTION( transredreleff,  1e2,  1,1e5,1,0,1, "relative efficiency per mille") \
+OPTION( trueliteralpenalty, 100, 0, 2e9,0,0,1, "Import heuristic argument which penalize stable true literals") \
+OPTION( varemawindow,    500,  1,2e9,0,0,1, "ema window for variable stats") \
 QUTOPT( verbose,           0,  0,  3,0,0,0, "more verbose messages") \
 OPTION( vivify,            1,  0,  1,0,1,1, "vivification") \
 OPTION( vivifymaxeff,    2e7,  0,2e9,1,0,1, "maximum efficiency") \

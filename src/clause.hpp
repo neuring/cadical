@@ -44,6 +44,7 @@ struct Clause {
   unsigned used:2;    // resolved in conflict analysis since last 'reduce'
   bool vivified:1;    // clause already vivified
   bool vivify:1;      // clause scheduled to be vivified
+  bool imported:1;    // clause imported from external solver.
 
   // The glucose level ('LBD' or short 'glue') is a heuristic value for the
   // expected usefulness of a learned clause, where smaller glue is consider

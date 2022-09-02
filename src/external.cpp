@@ -10,6 +10,7 @@ External::External (Internal * i)
   extended (false),
   terminator (0),
   learner (0),
+  learnSource (0),
   solution (0),
   vars (max_var)
 {
@@ -564,12 +565,13 @@ void External::export_learned_unit_clause (int ilit) {
     LOG ("not exporting learned unit clause");
 }
 
-void External::export_learned_large_clause (const vector<int> & clause) {
+void External::export_learned_large_clause (const vector<int> & clause, int glue) {
   assert (learner);
   size_t size = clause.size ();
   assert (size <= (unsigned) INT_MAX);
   if (learner->learning ((int) size)) {
     LOG ("exporting learned clause of size %zu", size);
+    learner->learn (glue);
     for (auto ilit : clause) {
       const int elit = internal->externalize (ilit);
       assert (elit);

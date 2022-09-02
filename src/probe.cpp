@@ -181,6 +181,7 @@ inline void Internal::probe_assign (int lit, int parent) {
   if (!level) learn_unit_clause (lit);
   else assert (level == 1);
   const signed char tmp = sign (lit);
+  this->update_stability(idx);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);
