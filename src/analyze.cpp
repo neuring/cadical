@@ -725,6 +725,8 @@ void Internal::analyze () {
   stats.learned.literals += size;
   stats.learned.clauses++;
   assert (glue < size);
+  this->sample_trail();
+  this->compare_clause_lbd_with_fuzzy_lbd(clause, glue);
 
 
   // Minimize the 1st UIP clause as pioneered by Niklas Soerensson in

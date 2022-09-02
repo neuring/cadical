@@ -374,6 +374,8 @@ bool Internal::propagate () {
     }
   }
 
+  //this->sample_trail();
+
   STOP (propagate);
 
   return !conflict;

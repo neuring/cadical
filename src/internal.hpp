@@ -158,8 +158,9 @@ struct Internal {
   int max_var;                  // internal maximum variable index
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
-  signed char * vals;           // assignment [-max_var,max_var]
-  vector<signed char> marks;    // signed marks [1,max_var]
+  signed char * vals;            // assignment [-max_var,max_var]
+  vector<EMA> assignment_reason;  // ratio of decision/propagagtion assignments [1, max_var]
+  vector<signed char> marks;     // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'
   Queue queue;                  // variable move to front decision queue
@@ -1038,6 +1039,10 @@ struct Internal {
     void lookahead_generate_probes();
     std::vector<int> lookahead_populate_locc();
     int lookahead_locc(const std::vector<int> &);
+
+    // Trail Sampling
+    void sample_trail();
+    void compare_clause_lbd_with_fuzzy_lbd(std::vector<int>&, int);
 
     bool terminating_asked();
 
