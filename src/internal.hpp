@@ -160,6 +160,7 @@ struct Internal {
   Phases phases;                // saved, target and best phases
   signed char * vals;            // assignment [-max_var,max_var]
   vector<EMA> assignment_reason;  // ratio of decision/propagagtion assignments [1, max_var]
+  vector<EMA> assignment_polarity;  // ratio of sat/unsat assignment [1, max_var]
   vector<signed char> marks;     // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'
@@ -1043,6 +1044,7 @@ struct Internal {
     // Trail Sampling
     void sample_trail();
     void compare_clause_lbd_with_fuzzy_lbd(std::vector<int>&, int);
+    void compare_polarity_ratio_with_conflict_or_prop_clause(Clause *, bool);
 
     bool terminating_asked();
 

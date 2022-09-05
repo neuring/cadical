@@ -354,6 +354,7 @@ void Internal::compact () {
   mapper.map_vector (links);
   mapper.map_vector (vtab);
   mapper.map_vector (assignment_reason);
+  mapper.map_vector (assignment_polarity);
   if (!ntab.empty ()) mapper.map2_vector (ntab);
   if (!wtab.empty ()) mapper.map2_vector (wtab);
   if (!otab.empty ()) mapper.map2_vector (otab);
