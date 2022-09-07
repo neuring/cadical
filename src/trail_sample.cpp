@@ -8,6 +8,7 @@ namespace CaDiCaL {
         if (output_file == nullptr) {
             output_file = new ofstream();
             output_file->open("fuzzy_lbd_error.data");
+            *output_file << "fuzzy, expected, error, size" << std::endl;
         }
         return output_file;
     }
@@ -17,6 +18,7 @@ namespace CaDiCaL {
         if (output_file == nullptr) {
             output_file = new ofstream();
             output_file->open("fuzzy_polarity.data");
+            *output_file << "fuzzy, size" << std::endl;
         }
         return output_file;
     }
@@ -58,7 +60,7 @@ namespace CaDiCaL {
                 UPDATE_AVERAGE(this->assignment_reason[var], 0);
             }
 
-            UPDATE_AVERAGE(this->assignment_polarity[var], lit > 0);
+            UPDATE_AVERAGE(this->assignment_polarity[var], lit > 0 ? 1 : 0);
 
             if (control_iter != this->control.end() && trail_pos >= control_iter->trail) {
                 control_iter++;
@@ -75,7 +77,7 @@ namespace CaDiCaL {
     }
 
     void Internal::compare_polarity_ratio_with_conflict_or_prop_clause(Clause *clause, bool is_conflict /*either reason or conflict*/) {
-        return; // Disable comment this in or out if it should be enabled.
+        //return; // Disable comment this in or out if it should be enabled.
         if (!is_conflict) return;
 
         double fuzzy_polarity = 0;
@@ -94,7 +96,7 @@ namespace CaDiCaL {
     }
 
     void Internal::compare_clause_lbd_with_fuzzy_lbd(std::vector<int>& clause, int lbd) {
-        //return; // Disable comment this in or out if it should be enabled.
+        return; // Disable comment this in or out if it should be enabled.
 
         double fuzzy_lbd = 0;
         for (auto lit : clause) {

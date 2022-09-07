@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include<iostream>
 
 namespace CaDiCaL {
 
@@ -122,10 +123,11 @@ void Internal::enlarge (int new_max_var) {
   while (new_vsize <= (size_t) new_max_var) new_vsize *= 2;
   LOG ("enlarge internal size from %zd to new size %zd", vsize, new_vsize);
   // Ordered in the size of allocated memory (larger block first).
+  std::cout << "varemawindow = " << this->opts.varemawindow << std::endl;
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
-  enlarge_init (assignment_reason, 2*new_vsize, EMA(1/this->opts.varemawindow)); //TODO(achim): Window size should be parameter
-  enlarge_init (assignment_polarity, 2*new_vsize, EMA(1/this->opts.varemawindow)); //TODO(achim): Window size should be parameter
+  enlarge_init (assignment_reason, 2*new_vsize, EMA(1./this->opts.varemawindow));
+  enlarge_init (assignment_polarity, 2*new_vsize, EMA(1./this->opts.varemawindow));
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);

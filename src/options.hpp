@@ -172,7 +172,7 @@ OPTION( transred,          1,  0,  1,0,1,1, "transitive reduction of BIG") \
 OPTION( transredmaxeff,  1e8,  0,2e9,1,0,1, "maximum efficiency") \
 OPTION( transredmineff,  1e6,  0,2e9,1,0,1, "minimum efficiency") \
 OPTION( transredreleff,  1e2,  1,1e5,1,0,1, "relative efficiency per mille") \
-OPTION( varemawindow,    1e4,  1,2e9,0,0,1, "ema window for variable stats") \
+OPTION( varemawindow,    4e3,  1,2e9,0,0,1, "ema window for variable stats") \
 QUTOPT( verbose,           0,  0,  3,0,0,0, "more verbose messages") \
 OPTION( vivify,            1,  0,  1,0,1,1, "vivification") \
 OPTION( vivifymaxeff,    2e7,  0,2e9,1,0,1, "maximum efficiency") \
