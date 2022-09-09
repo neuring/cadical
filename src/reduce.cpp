@@ -65,6 +65,23 @@ struct reduce_less_useful {
   }
 };
 
+struct reduce_less_stability {
+  Internal *internal;
+
+  reduce_less_stability(Internal * internal) : internal(internal) {}
+
+  bool operator () (const Clause * c, const Clause * d) const {
+    auto c_stability = this->internal->clause_stability(c);
+    auto d_stability = this->internal->clause_stability(c);
+
+    if (c_stability < d_stability) return true;
+    if (c_stability > d_stability) return false;
+    if (c->glue > d->glue) return true;
+    if (c->glue < d->glue) return false;
+    return c->size > d->size;
+  }
+};
+
 // This function implements the important reduction policy. It determines
 // which redundant clauses are considered not useful and thus will be
 // collected in a subsequent garbage collection phase.
@@ -98,7 +115,11 @@ void Internal::mark_useless_redundant_clauses_as_garbage () {
     stack.push_back (c);
   }
 
-  stable_sort (stack.begin (), stack.end (), reduce_less_useful ());
+  if (this->opts.reducestability) {
+    stable_sort (stack.begin (), stack.end (), reduce_less_stability (this->internal));
+  } else {
+    stable_sort (stack.begin (), stack.end (), reduce_less_useful ());
+  }
 
   size_t target = 1e-2 * opts.reducetarget * stack.size ();
 

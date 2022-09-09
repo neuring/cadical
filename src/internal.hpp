@@ -1045,6 +1045,7 @@ struct Internal {
     void sample_trail();
     void compare_clause_lbd_with_fuzzy_lbd(std::vector<int>&, int);
     void compare_polarity_ratio_with_conflict_or_prop_clause(Clause *, bool);
+    double clause_stability(const Clause *);
 
     bool terminating_asked();
 

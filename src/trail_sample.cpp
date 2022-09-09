@@ -3,6 +3,12 @@
 #include<fstream>
 
 namespace CaDiCaL {
+    static double clamp(double val, double low, double high) {
+        if (val < low) return low;
+        else if (high < val) return high;
+        else return val;
+    }
+
     static ofstream* get_lbd_output_stream() {
         static ofstream *output_file = nullptr;
         if (output_file == nullptr) {
@@ -18,7 +24,7 @@ namespace CaDiCaL {
         if (output_file == nullptr) {
             output_file = new ofstream();
             output_file->open("fuzzy_polarity.data");
-            *output_file << "fuzzy, size" << std::endl;
+            *output_file << "fuzzy, sum, size" << std::endl;
         }
         return output_file;
     }
@@ -70,23 +76,39 @@ namespace CaDiCaL {
         //write_new_assignment_reason_ratios(this);
     }
 
-    static void write_fuzzy_polarity_data_to_file(double fuzzy_polarity, int size) {
+    static void write_fuzzy_polarity_data_to_file(double fuzzy_polarity, double fuzzy_sum, int size) {
         auto output_file = get_polarity_output_stream();
 
-        *output_file << fuzzy_polarity << ", " << size << std::endl;
+        *output_file << fuzzy_polarity << ", " << fuzzy_sum << ", " << size << std::endl;
     }
 
     void Internal::compare_polarity_ratio_with_conflict_or_prop_clause(Clause *clause, bool is_conflict /*either reason or conflict*/) {
-        //return; // Disable comment this in or out if it should be enabled.
+        return; // Disable comment this in or out if it should be enabled.
         if (!is_conflict) return;
 
-        double fuzzy_polarity = 0;
+        double fuzzy_polarity = 1;
+        double fuzzy_sum = 0;
         for (int i = 0; i < clause->size; i++) {
             auto lit = clause->literals[i];
-            fuzzy_polarity += this->assignment_polarity[vidx(lit)].value;
-        }
 
-        write_fuzzy_polarity_data_to_file(fuzzy_polarity, clause->size);
+            // Probability that the variable of lit is satisfied (vs unsatisfied)
+            auto var_prob = this->assignment_polarity[vidx(lit)].value;
+            assert(-0.001 <= var_prob && var_prob <= 1.001);
+            var_prob = clamp(var_prob, 0, 1); // Apparently the cadicals EMA implementation doesn't guarante that its value is between the lowest and highest value provided.
+
+            // Probability that lit is satisfied (vs unsatisfied)
+            auto lit_prob = lit < 0 ? 1 - var_prob : var_prob;
+            assert(0 <= lit_prob && lit_prob <= 1);
+
+            fuzzy_sum += lit_prob;
+
+            // We multiply the probability that each literal is unsatisfied.
+            fuzzy_polarity *= 1 - lit_prob;
+            assert(0 <= fuzzy_polarity && fuzzy_polarity <= 1);
+        }
+        assert(0 <= fuzzy_polarity && fuzzy_polarity <= 1);
+
+        write_fuzzy_polarity_data_to_file(fuzzy_polarity, fuzzy_sum, clause->size);
     }
 
     static void write_fuzzy_lbd_data_to_file(double fuzzy_lbd, int expected_lbd, double error, int size) {
@@ -105,5 +127,17 @@ namespace CaDiCaL {
 
         auto error = abs(fuzzy_lbd - lbd);
         write_fuzzy_lbd_data_to_file(fuzzy_lbd, lbd, error,clause.size());
+    }
+
+    double Internal::clause_stability(const Clause *clause) {
+        double result = 0.0;
+
+        for (int i = 0; i < clause->size; i++) {
+            auto lit = clause->literals[i];
+            auto var_stability = this->assignment_polarity[vidx(lit)].value;
+            result += lit > 0 ? var_stability : 1 - var_stability;
+        }
+
+        return result;
     }
 }
