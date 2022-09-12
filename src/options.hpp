@@ -118,10 +118,10 @@ OPTION( radixsortlim,    800,  0,2e9,0,0,1, "radix sort limit") \
 OPTION( realtime,          0,  0,  1,0,0,0, "real instead of process time") \
 OPTION( reduce,            1,  0,  1,0,0,1, "reduce useless clauses") \
 OPTION( reduceint,       300, 10,1e6,0,0,1, "reduce interval") \
+OPTION( reducestability,   0,  0,  1,0,0,1, "use literal stability instead of glue to reduce clauses") \
 OPTION( reducetarget,     75, 10,1e2,0,0,1, "reduce fraction in percent") \
 OPTION( reducetier1glue,   2,  1,2e9,0,0,1, "glue of kept learned clauses") \
 OPTION( reducetier2glue,   6,  1,2e9,0,0,1, "glue of tier two clauses") \
-OPTION( reducestability,   0,  0,  1,0,0,1, "use literal stability instead of glue to reduce clauses") \
 OPTION( reluctant,      1024,  0,2e9,0,0,1, "reluctant doubling period") \
 OPTION( reluctantmax,1048576,  0,2e9,0,0,1, "reluctant doubling period") \
 OPTION( rephase,           1,  0,  1,0,0,1, "enable resetting phase") \
