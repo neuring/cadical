@@ -946,6 +946,10 @@ struct Internal {
     bool failed_constraint(); // Was constraint used to proof unsatisfiablity?
     void reset_constraint();  // Reset after 'solve' call.
 
+    // Import learnt clauses from an external source.
+    bool importing ();
+    void import_redundant_clauses (int& res);
+
     // Forcing decision variables to a certain phase.
     //
     void phase(int lit);

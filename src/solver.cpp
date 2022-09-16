@@ -770,6 +770,29 @@ void Solver::disconnect_learner () {
   LOG_API_CALL_END ("disconnect_learner");
 }
 
+void Solver::connect_learn_source (LearnSource * learnSource) {
+  external->learnSource = learnSource;
+}
+void Solver::disconnect_learn_source () {
+  external->learnSource = 0;
+}
+
+Solver::Statistics Solver::get_stats () {
+  Statistics s;
+  s.conflicts = internal->stats.conflicts;
+  s.decisions = internal->stats.decisions;
+  s.propagations = 0;
+  s.propagations += internal->stats.propagations.cover;
+  s.propagations += internal->stats.propagations.instantiate;
+  s.propagations += internal->stats.propagations.probe;
+  s.propagations += internal->stats.propagations.search;
+  s.propagations += internal->stats.propagations.transred;
+  s.propagations += internal->stats.propagations.vivify;
+  s.propagations += internal->stats.propagations.walk;
+  s.restarts = internal->stats.restarts;
+  return s;
+}
+
 /*===== IPASIR END =======================================================*/
 
 int Solver::active () const {

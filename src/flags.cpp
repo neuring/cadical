@@ -4,6 +4,9 @@ namespace CaDiCaL {
 
 void Internal::mark_fixed (int lit) {
   Flags & f = flags (lit);
+  if (f.status != Flags::ACTIVE) {
+    fprintf(stderr, "FLAG STATUS %i\n", f.status);
+  }
   assert (f.status == Flags::ACTIVE);
   f.status = Flags::FIXED;
   LOG ("fixed %d", abs (lit));

@@ -745,7 +745,7 @@ void Internal::analyze () {
     if (opts.bump)
       bump_variables();
 
-    if (external->learner) external->export_learned_large_clause (clause);
+    if (external->learner) external->export_learned_large_clause (clause, glue);
   } else if (external->learner)
     external->export_learned_unit_clause(-uip);
 
