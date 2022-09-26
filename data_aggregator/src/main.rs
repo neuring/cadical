@@ -1,11 +1,11 @@
 #![feature(once_cell)]
 
-use std::{collections::HashMap, path::PathBuf, sync::{Arc, Mutex}, process::Stdio, time::Duration, str::FromStr, sync::{LazyLock, MutexGuard}, fmt};
+use std::{collections::HashMap, path::{PathBuf, Path}, sync::{Arc, Mutex}, process::Stdio, time::Duration, str::FromStr, sync::{LazyLock, MutexGuard}, fmt};
 
 use anyhow::Context;
 use clap::Parser;
 use sysinfo::{System, SystemExt, Pid, ProcessExt};
-use tokio::{net::{UnixStream, UnixListener}, io::{AsyncReadExt, BufReader, AsyncRead}, select, sync::{mpsc, oneshot, Semaphore}, process::Command};
+use tokio::{net::{UnixStream, UnixListener}, io::{AsyncReadExt, BufReader, AsyncRead}, select, sync::{mpsc, oneshot, Semaphore}, process::Command, fs::read_to_string};
 
 static SYSINFO: LazyLock<Mutex<System>> = LazyLock::new(|| {
     let sys = System::new_all();
@@ -27,9 +27,9 @@ struct Config {
     #[clap(short, long)]
     file: String,
 
-    /// Number of times to run the sat solver with different seeds.
-    #[clap(short, long, default_value="2")]
-    iterations: u32,
+    /// File containing newline separated list of flags to be used for each individual solver execution.
+    #[clap(short, long)]
+    instance_configs: PathBuf,
 
     /// How many instances of sat solvers to run in parallel.
     #[clap(short, long, default_value="2")]
@@ -162,11 +162,11 @@ async fn data_aggregation_handler(mut receiver: mpsc::Receiver<ClauseData>, mut 
                 update_data_map(&mut data, &clause_data);
             }
             _ = tokio::signal::ctrl_c() =>  {
-                println!("Termination signal received");
+                eprintln!("Termination signal received");
                 return Ok(data);
             }
             _ = &mut finish => {
-                println!("Finished all runs");
+                eprintln!("Finished all runs");
                 return Ok(data);
             }
         }
@@ -174,15 +174,14 @@ async fn data_aggregation_handler(mut receiver: mpsc::Receiver<ClauseData>, mut 
 
 }
 
-async fn spawn_cadical(config: Arc<Config>, number: u32) -> anyhow::Result<()> {
+async fn spawn_cadical(config: Arc<Config>, instance_conf: Vec<String>) -> anyhow::Result<()> {
     let mut cmd = Command::new(&config.cadical_path);
     cmd 
         .arg(&config.file)
-        .arg("--seed")
-        .arg(&number.to_string())
+        .args(&config.solver_flags)
+        .args(&instance_conf)
         .arg("--lbd-socket-path")
         .arg(&config.pipe_path)
-        .args(&config.solver_flags)
         .stdout(Stdio::null());
 
     let mut child_handle = cmd.spawn().context("Couldn't spawn cadical child process")?;
@@ -204,7 +203,7 @@ async fn spawn_cadical(config: Arc<Config>, number: u32) -> anyhow::Result<()> {
 
                 if memory_usage > config.max_mem_usage.kb / config.parallel as u64 {
                     child_handle.kill().await.context("Couldn't kill child that uses too much memory")?;
-                    println!("Cadical process used too much memory");
+                    eprintln!("Cadical process used too much memory");
                 }
             }
         }
@@ -217,21 +216,23 @@ async fn spawn_cadical(config: Arc<Config>, number: u32) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn cadical_spawner(config: Arc<Config>, finish: oneshot::Sender<()>) -> anyhow::Result<()> {
+async fn cadical_spawner(config: Arc<Config>, finish: oneshot::Sender<()>, instance_configs: Vec<Vec<String>>) -> anyhow::Result<()> {
 
     let sem = Arc::new(Semaphore::new(config.parallel as usize));
 
     let mut handles = Vec::new();
 
-    for i in 1..=config.iterations {
-        println!("progress {}/{}", i, config.iterations);
+    let instances = instance_configs.len();
+
+    for (i, instance_config) in instance_configs.into_iter().enumerate() {
+        eprintln!("progress {}/{}", i, instances);
         let permit = sem.clone().acquire_owned().await.context("Error on semaphore acquire.")?;
         let config_clone = config.clone();
 
         let handle = tokio::spawn(async move {
             let _p = permit;
 
-            spawn_cadical(config_clone, i).await
+            spawn_cadical(config_clone, instance_config).await
         });
 
         handles.push(handle);
@@ -244,6 +245,18 @@ async fn cadical_spawner(config: Arc<Config>, finish: oneshot::Sender<()>) -> an
     finish.send(()).unwrap();
 
     Ok(())
+}
+
+async fn read_instance_config(path: &Path) -> anyhow::Result<Vec<Vec<String>>> {
+    let configs = read_to_string(path).await.with_context(|| format!("Failed to read instance configuration from path '{}'", path.to_string_lossy()))?;
+
+    Ok(
+        configs.split_terminator('\n')
+               .map(|s| s.split_whitespace()
+                         .map(|s| s.to_owned())
+                         .collect::<Vec<_>>())
+               .collect()
+    )
 }
 
 #[tokio::main]
@@ -271,17 +284,18 @@ async fn main() -> anyhow::Result<()> {
 
     let aggregator = data_aggregation_handler(receiver, finish_receiver);
 
-    let _spawner_handle = tokio::spawn(cadical_spawner(config.clone(), finish_sender));
+    let instance_configs = read_instance_config(&config.instance_configs).await?;
+    let _spawner_handle = tokio::spawn(cadical_spawner(config.clone(), finish_sender, instance_configs));
 
     let result = aggregator.await;
     let result = result.context("Data aggregation failed")?;
-    println!("unique clauses: {}", result.len());
+    eprintln!("unique clauses: {}", result.len());
 
     for (clause, stats) in result.iter() {
         if stats.final_variance() == 0. {
             continue;
         }
-        println!("count = {}, mean = {}, variance = {}, ({:<?})", stats.final_count(), stats.final_mean(), stats.final_variance(), clause)
+        println!("{},{},{},{}", stats.final_count(), stats.final_mean(), stats.final_variance(), clause.len())
     }
 
     tokio::fs::remove_file(&config.pipe_path).await.context("Couldn't remove socket file")
