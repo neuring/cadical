@@ -1048,8 +1048,16 @@ struct Internal {
     // Trail Sampling
     void sample_trail();
     void compare_clause_lbd_with_fuzzy_lbd(std::vector<int>&, int);
-    void compare_polarity_ratio_with_conflict_or_prop_clause(Clause *, bool);
+    void compare_polarity_ratio_with_conflict_or_prop_clause(const Clause *, bool);
     double clause_stability(const Clause *);
+
+    // Calculates an estimation of the probability that the given clause will become
+    // a conflict clause, based on the gathered stability.
+
+    double calculate_estimated_conflict_probability(std::vector<int>&);
+    double calculate_estimated_conflict_probability(const Clause *);
+    double calculate_stability_sum(std::vector<int>&);
+    double calculate_stability_sum(const Clause *);
 
     bool terminating_asked();
 

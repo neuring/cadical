@@ -232,9 +232,17 @@ bool Internal::importing () {
       && watching() && external->learnSource->hasNextClause ();
 }
 
+struct ClauseWithHeuristic {
+  std::vector<int> clause;
+  double heuristic;
+  int glue;
+};
+
 void Internal::import_redundant_clauses (int& res) {
   if (external->learnSource == 0) return;
   if (res != 0) return;
+
+  std::vector<ClauseWithHeuristic> clause_candidates;
 
   // Import external clauses.
   while (external->learnSource->hasNextClause ()) {
@@ -294,12 +302,10 @@ void Internal::import_redundant_clauses (int& res) {
       // Handle clause of size >= 2 being learnt
       // (unit clauses are handled below)
       if (clause.size () >= 2) {
+        auto estimated_probability = this->calculate_estimated_conflict_probability(clause);
+        clause_candidates.push_back({clause, estimated_probability, glue});
         //printf("Learn non-unit clause\n");
         external->check_learned_clause ();
-        Clause * res = new_clause (true, glue);
-        if (proof) proof->add_derived_clause (res);
-        assert (watching ());
-        watch_clause (res);
         unitLit = 0;
       }
 
@@ -324,6 +330,31 @@ void Internal::import_redundant_clauses (int& res) {
       // Actually add the unit clause
       if (add) assign_original_unit (ilit);
     }
+
+    // Stop importing if SAT or UNSAT was found
+    if (unsat) {
+      res = 20;
+      return;
+    }
+    if (satisfied ()) {
+      res = 10;
+      return;
+    }
+  }
+
+  // Sort clause candidates
+  std::sort(clause_candidates.begin(), clause_candidates.end(), [](const auto& left, const auto& right) {
+    return left.heuristic < right.heuristic;
+  });
+
+  for (auto clause : clause_candidates) {
+    std::cout << "Clause Heuristic " << clause.heuristic << std::endl;
+    this->clause = clause.clause;
+    Clause * cls_res = new_clause (true, clause.glue);
+    this->clause.clear();
+    if (proof) proof->add_derived_clause (cls_res);
+    assert (watching ());
+    watch_clause (cls_res);
 
     // Stop importing if SAT or UNSAT was found
     if (unsat) {
