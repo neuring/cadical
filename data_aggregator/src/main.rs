@@ -1,16 +1,16 @@
-#![feature(once_cell)]
-
-use std::{collections::HashMap, path::{PathBuf, Path}, sync::{Arc, Mutex}, process::Stdio, time::Duration, str::FromStr, sync::{LazyLock, MutexGuard}, fmt};
+use std::{collections::HashMap, path::{PathBuf, Path}, sync::{Arc, Mutex}, process::Stdio, time::Duration, str::FromStr, sync::MutexGuard, fmt};
 
 use anyhow::Context;
 use clap::Parser;
 use sysinfo::{System, SystemExt, Pid, ProcessExt};
-use tokio::{net::{UnixStream, UnixListener}, io::{AsyncReadExt, BufReader, AsyncRead}, select, sync::{mpsc, oneshot, Semaphore}, process::Command, fs::read_to_string};
+use tokio::{net::{UnixStream, UnixListener}, io::{AsyncReadExt, BufReader, AsyncRead}, select, sync::{mpsc, oneshot, Semaphore, OnceCell}, process::Command, fs::read_to_string};
 
-static SYSINFO: LazyLock<Mutex<System>> = LazyLock::new(|| {
+static SYSINFO: OnceCell<Mutex<System>> = OnceCell::const_new();
+
+async fn init_system() -> Mutex<System> {
     let sys = System::new_all();
     Mutex::new(sys)
-});
+}
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -65,9 +65,17 @@ impl FromStr for Memory {
 
 impl Default for Memory {
     fn default() -> Self {
-        let sys: &System = &*SYSINFO.lock().unwrap();
+        let memory = async {
+            let sys: &System = &*SYSINFO.get_or_init(init_system).await.lock().unwrap();
+            sys.total_memory()
+        };
 
-        let memory = sys.total_memory();
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build().unwrap();
+
+        // Call the asynchronous connect method using the runtime.
+        let memory = rt.block_on(memory);
 
         Self { kb: memory }
     }
@@ -196,7 +204,7 @@ async fn spawn_cadical(config: Arc<Config>, instance_conf: Vec<String>) -> anyho
             _ = tokio::time::sleep(Duration::from_secs(1)) => {
                 // Check if child process consumes too much memory, if so kill it
                 let memory_usage = {
-                    let mut sysinfo: MutexGuard<System> = SYSINFO.lock().unwrap();
+                    let mut sysinfo: MutexGuard<System> = SYSINFO.get_or_init(init_system).await.lock().unwrap();
                     assert!(sysinfo.refresh_process(child_pid));
                     sysinfo.process(child_pid).unwrap().memory()
                 };
