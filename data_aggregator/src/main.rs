@@ -267,9 +267,17 @@ async fn read_instance_config(path: &Path) -> anyhow::Result<Vec<Vec<String>>> {
     )
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()>{
     let config = Arc::new(Config::parse());
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async_main(config))
+}
+
+async fn async_main(config: Arc<Config>) -> anyhow::Result<()> {
 
     let (sender, receiver) = tokio::sync::mpsc::channel(10000);
 
