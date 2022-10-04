@@ -1050,6 +1050,7 @@ struct Internal {
     void compare_clause_lbd_with_fuzzy_lbd(std::vector<int>&, int);
     void compare_polarity_ratio_with_conflict_or_prop_clause(const Clause *, bool);
     double clause_stability(const Clause *);
+    double calculate_fuzzy_lbd(std::vector<int>&);
 
     // Calculates an estimation of the probability that the given clause will become
     // a conflict clause, based on the gathered stability.

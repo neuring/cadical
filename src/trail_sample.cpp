@@ -87,11 +87,7 @@ namespace CaDiCaL {
     void Internal::compare_clause_lbd_with_fuzzy_lbd(std::vector<int>& clause, int lbd) {
         return; // Disable comment this in or out if it should be enabled.
 
-        double fuzzy_lbd = 0;
-        for (auto lit : clause) {
-            fuzzy_lbd += this->assignment_reason[vidx(lit)].value;
-        }
-
+        auto fuzzy_lbd = this->calculate_fuzzy_lbd(clause);
         auto error = abs(fuzzy_lbd - lbd);
         write_fuzzy_lbd_data_to_file(fuzzy_lbd, lbd, error,clause.size());
     }
@@ -100,6 +96,14 @@ namespace CaDiCaL {
         auto output_file = get_polarity_output_stream();
 
         *output_file << fuzzy_polarity << ", " << fuzzy_sum << ", " << size << std::endl;
+    }
+
+    double Internal::calculate_fuzzy_lbd(std::vector<int>& clause) {
+        double fuzzy_lbd = 0;
+        for (auto lit : clause) {
+            fuzzy_lbd += this->assignment_reason[vidx(lit)].value;
+        }
+        return fuzzy_lbd;
     }
 
 // Stability

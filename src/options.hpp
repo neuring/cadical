@@ -94,6 +94,8 @@ OPTION( flush,             0,  0,  1,0,0,1, "flush redundant clauses") \
 OPTION( flushfactor,       3,  1,1e3,0,0,1, "interval increase") \
 OPTION( flushint,        1e5,  1,2e9,0,0,1, "initial limit") \
 OPTION( forcephase,        0,  0,  1,0,0,1, "always use initial phase") \
+OPTION( importheuristic,   0,  0,  2,0,0,1, "import heuristic to use (0 = None, 1 = conflict probabiilty, 2 = conflict probability sum)") \
+OPTION( importpercent,   1.0,0.0,1.0,0,0,1, "the percentage of clauses to be imported.") \
 OPTION( inprocessing,      1,  0,  1,0,0,1, "enable inprocessing") \
 OPTION( instantiate,       0,  0,  1,0,1,1, "variable instantiation") \
 OPTION( instantiateclslim, 3,  2,2e9,0,0,1, "minimum clause size") \
