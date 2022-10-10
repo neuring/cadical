@@ -165,6 +165,22 @@ namespace CaDiCaL {
         return sum ;
     }
 
+    double Internal::calculate_min_stability_literal(std::vector<int>& clause) {
+        assert(clause.size() > 0);
+        double min = INFINITY;
+
+        for (int i = 0; i < clause.size(); i++) {
+            auto lit = clause[i];
+            auto var_stability = this->assignment_polarity[vidx(lit)].value;
+            auto lit_stability = lit < 0 ? 1 - var_stability : var_stability;
+            if (min > lit_stability) {
+                min = lit_stability;
+            }
+        }
+
+        return min;
+    }
+
     double Internal::calculate_stability_sum(std::vector<int>& clause) {
         return _calculate_stability_sum(this, clause.data(), clause.size());
     }

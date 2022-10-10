@@ -319,6 +319,8 @@ void Internal::import_redundant_clauses (int& res) {
           case 4: 
             heuristic = this->calculate_fuzzy_lbd(clause);
             break;
+          case 5:
+            heuristic = this->calculate_min_stability_literal(clause);
           default: heuristic = 0;
         }
 

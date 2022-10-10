@@ -1057,6 +1057,7 @@ struct Internal {
 
     double calculate_estimated_conflict_probability(std::vector<int>&);
     double calculate_estimated_conflict_probability(const Clause *);
+    double calculate_min_stability_literal(std::vector<int>&);
     double calculate_stability_sum(std::vector<int>&);
     double calculate_stability_sum(const Clause *);
 
