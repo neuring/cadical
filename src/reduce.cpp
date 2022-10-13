@@ -71,8 +71,8 @@ struct reduce_less_stability {
   reduce_less_stability(Internal * internal) : internal(internal) {}
 
   bool operator () (const Clause * c, const Clause * d) const {
-    auto c_stability = this->internal->clause_stability(c);
-    auto d_stability = this->internal->clause_stability(c);
+    auto c_stability = this->internal->calculate_stability_sum(c);
+    auto d_stability = this->internal->calculate_stability_sum(d);
 
     if (c_stability < d_stability) return true;
     if (c_stability > d_stability) return false;

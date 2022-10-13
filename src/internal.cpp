@@ -126,8 +126,8 @@ void Internal::enlarge (int new_max_var) {
   // Ordered in the size of allocated memory (larger block first).
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
-  enlarge_init (assignment_reason, 2*new_vsize, EMA(1./this->opts.varemawindow));
-  enlarge_init (assignment_polarity, 2*new_vsize, EMA(1./this->opts.varemawindow));
+  enlarge_init (stability_true, 2*new_vsize, EMA(1./this->opts.varemawindow));
+  enlarge_init (stability_false, 2*new_vsize, EMA(1./this->opts.varemawindow));
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);
@@ -316,11 +316,6 @@ void Internal::import_redundant_clauses (int& res) {
           case 3: 
             heuristic = glue;
             break;
-          case 4: 
-            heuristic = this->calculate_fuzzy_lbd(clause);
-            break;
-          case 5:
-            heuristic = this->calculate_min_stability_literal(clause);
           default: heuristic = 0;
         }
 

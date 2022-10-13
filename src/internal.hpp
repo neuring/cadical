@@ -158,10 +158,10 @@ struct Internal {
   int max_var;                  // internal maximum variable index
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
-  signed char * vals;            // assignment [-max_var,max_var]
-  vector<EMA> assignment_reason;  // ratio of decision/propagagtion assignments [1, max_var]
-  vector<EMA> assignment_polarity;  // ratio of sat/unsat assignment [1, max_var]
-  vector<signed char> marks;     // signed marks [1,max_var]
+  signed char * vals;           // assignment [-max_var,max_var]
+  vector<EMA> stability_true;   // the local ratio that a variable is true  (vs. false or unassigned)
+  vector<EMA> stability_false;  // the local ratio that a variable is false (vs. true  or unassigned)
+  vector<signed char> marks;    // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'
   Queue queue;                  // variable move to front decision queue
@@ -1047,17 +1047,12 @@ struct Internal {
 
     // Trail Sampling
     void sample_trail();
-    void compare_clause_lbd_with_fuzzy_lbd(std::vector<int>&, int);
-    void compare_polarity_ratio_with_conflict_or_prop_clause(const Clause *, bool);
-    double clause_stability(const Clause *);
-    double calculate_fuzzy_lbd(std::vector<int>&);
 
     // Calculates an estimation of the probability that the given clause will become
     // a conflict clause, based on the gathered stability.
 
     double calculate_estimated_conflict_probability(std::vector<int>&);
     double calculate_estimated_conflict_probability(const Clause *);
-    double calculate_min_stability_literal(std::vector<int>&);
     double calculate_stability_sum(std::vector<int>&);
     double calculate_stability_sum(const Clause *);
 
