@@ -311,10 +311,10 @@ void Internal::import_redundant_clauses (int& res) {
             heuristic = 1.0 - this->calculate_estimated_conflict_probability(clause);
             break;
           case 2: 
-            heuristic = this->calculate_stability_sum(clause);
+            heuristic = this->clause_conflict_heuristic_average(clause);
             break;
           case 3: 
-            heuristic = glue;
+            heuristic = this->clause_conflict_heuristic_lukasiewicz(clause);
             break;
           default: heuristic = 0;
         }

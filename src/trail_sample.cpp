@@ -52,6 +52,27 @@ namespace CaDiCaL {
         return lit_prob;
     }
 
+    double Internal::clause_conflict_heuristic_average(const std::vector<int>& clause) {
+        double sum = 0;
+
+        for (auto lit : clause) {
+            sum += probability_lit_is_false(this, lit);
+        }
+
+        return sum / clause.size();
+    }
+
+    double Internal::clause_conflict_heuristic_lukasiewicz(const std::vector<int>& clause) {
+        double result = 1.0;
+
+        for (auto lit : clause) {
+            auto lit_prob = probability_lit_is_false(this, lit);
+            result = std::max(result + lit_prob - 1, 0.0);
+        }
+
+        return result;
+    }
+
     double _calculate_estimated_conflict_probability(Internal *internal, const int *clause, size_t size) {
         double probability = 1.0;
 
