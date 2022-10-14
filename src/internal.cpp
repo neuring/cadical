@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include <fstream>
 
 namespace CaDiCaL {
 
@@ -50,6 +51,8 @@ Internal::Internal ()
   lits (this->max_var)
 {
   control.push_back (Level (0, 0));
+  decision_level_output = new ofstream();
+  decision_level_output->open("decision_level.data");
 }
 
 Internal::~Internal () {
@@ -59,6 +62,9 @@ Internal::~Internal () {
   if (tracer) delete tracer;
   if (checker) delete checker;
   if (vals) { vals -= vsize; delete [] vals; }
+  decision_level_output->flush();
+  decision_level_output->close();
+  delete decision_level_output;
 }
 
 /*------------------------------------------------------------------------*/

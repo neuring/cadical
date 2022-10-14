@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include <fstream>
 
 namespace CaDiCaL {
 
@@ -609,6 +610,8 @@ void Internal::analyze () {
   START (analyze);
 
   assert (conflict);
+
+  *this->decision_level_output << this->level << "," << this->trail.size() << std::endl;
 
   // First update moving averages of trail height at conflict.
   //

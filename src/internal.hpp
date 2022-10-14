@@ -220,6 +220,8 @@ struct Internal {
   Internal * internal;          // proxy to 'this' in macros
   External * external;          // proxy to 'external' buddy in 'Solver'
 
+  ofstream * decision_level_output;
+
   /*----------------------------------------------------------------------*/
 
   // Asynchronous termination flag written by 'terminate' and read by

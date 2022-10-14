@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include <fstream>
 
 namespace CaDiCaL {
 
@@ -97,6 +98,9 @@ int Internal::reuse_trail () {
 
 void Internal::restart () {
   START (restart);
+
+  //*this->decision_level_output << "R" << std::endl;
+
   stats.restarts++;
   stats.restartlevels += level;
   if (stable) stats.restartstable++;
