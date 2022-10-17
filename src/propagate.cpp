@@ -199,7 +199,6 @@ bool Internal::propagate () {
         if (b < 0) conflict = w.clause;          // but continue ...
         else {
           search_assign (w.blit, w.clause);
-          this->compare_polarity_ratio_with_conflict_or_prop_clause(w.clause, false);
         }
 
       } else {
@@ -291,7 +290,6 @@ bool Internal::propagate () {
             // assigned to false (still 'v < 0'), thus we found a unit.
             //
             search_assign (other, w.clause);
-            this->compare_polarity_ratio_with_conflict_or_prop_clause(w.clause, false);
 
             // Similar code is in the implementation of the SAT'18 paper on
             // chronological backtracking but in our experience, this code
@@ -369,8 +367,6 @@ bool Internal::propagate () {
 
       if (stable) stats.stabconflicts++;
       stats.conflicts++;
-
-      this->compare_polarity_ratio_with_conflict_or_prop_clause(conflict, true);
 
       LOG (conflict, "conflict");
 

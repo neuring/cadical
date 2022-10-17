@@ -93,4 +93,11 @@ void EMA::update (Internal * internal, double y, const char * name) {
 #endif
 }
 
+void EMA::reset() {
+  this->value = 0;
+  this->biased=0;
+  this->beta = 0;
+  this->exp = 0;
+}
+
 }

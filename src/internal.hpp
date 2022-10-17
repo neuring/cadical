@@ -34,6 +34,7 @@ extern "C" {
 #include <queue>
 #include <string>
 #include <vector>
+#include <numeric>
 
 /*------------------------------------------------------------------------*/
 
@@ -1055,6 +1056,8 @@ struct Internal {
     double calculate_estimated_conflict_probability(const Clause *);
     double calculate_stability_sum(std::vector<int>&);
     double calculate_stability_sum(const Clause *);
+    double clause_conflict_heuristic_lukasiewicz(const std::vector<int>& clause);
+    double clause_conflict_heuristic_average(const std::vector<int>& clause);
 
     bool terminating_asked();
 

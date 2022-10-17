@@ -103,6 +103,13 @@ void Internal::restart () {
   LOG ("restart %" PRId64 "", stats.restarts);
   backtrack (reuse_trail ());
 
+  //for (EMA& ema : this->stability_false) {
+  //  ema.reset();
+  //}
+  //for (EMA& ema : this->stability_true) {
+  //  ema.reset();
+  //}
+
   lim.restart = stats.conflicts + opts.restartint;
   LOG ("new restart limit at %" PRId64 " conflicts", lim.restart);
 

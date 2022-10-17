@@ -318,6 +318,7 @@ void Internal::import_redundant_clauses (int& res) {
             break;
           default: heuristic = 0;
         }
+        //std::cout << "heuristic = " << heuristic << std::endl;
 
         clause_candidates.push_back({clause, heuristic, glue});
         //printf("Learn non-unit clause\n");

@@ -31,12 +31,12 @@ namespace CaDiCaL {
                     UPDATE_AVERAGE(this->stability_false[var], 0);
                     break;
                 case 1: 
-                    UPDATE_AVERAGE(this->stability_true[var], 0);
+                    UPDATE_AVERAGE(this->stability_true[var], 1);
                     UPDATE_AVERAGE(this->stability_false[var], 0);
                     break;
                 case -1: 
                     UPDATE_AVERAGE(this->stability_true[var], 0);
-                    UPDATE_AVERAGE(this->stability_false[var], 0);
+                    UPDATE_AVERAGE(this->stability_false[var], 1);
                     break;
             }
         }
@@ -68,6 +68,7 @@ namespace CaDiCaL {
         for (auto lit : clause) {
             auto lit_prob = probability_lit_is_false(this, lit);
             result = std::max(result + lit_prob - 1, 0.0);
+            //std::cout << "litprob = " << lit_prob << ", res = " << result << std::endl;
         }
 
         return result;
