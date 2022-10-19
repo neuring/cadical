@@ -37,7 +37,6 @@ struct EMA {
 
   operator double () const { return value; }
   void update (Internal *, double y, const char * name);
-  void reset();
 };
 
 }
