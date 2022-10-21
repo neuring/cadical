@@ -789,6 +789,8 @@ Solver::Statistics Solver::get_stats () {
   s.propagations += internal->stats.propagations.transred;
   s.propagations += internal->stats.propagations.vivify;
   s.propagations += internal->stats.propagations.walk;
+  s.conflicts_on_imported_clauses = internal->stats.import.conflicts_on_imported_clauses;
+  s.propagations_on_imported_clauses = internal->stats.import.propagations_on_imported_clauses;
   s.restarts = internal->stats.restarts;
   return s;
 }

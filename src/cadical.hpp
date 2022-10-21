@@ -293,6 +293,8 @@ public:
     int64_t decisions;    // number of decisions in 'decide'
     int64_t propagations; // total # propagations
     int64_t restarts;     // total # restarts
+    int64_t conflicts_on_imported_clauses;
+    int64_t propagations_on_imported_clauses;
   };
   Statistics get_stats ();
 

@@ -374,6 +374,8 @@ void Internal::import_redundant_clauses (int& res) {
 
     this->clause = clause->clause;
     Clause * cls_res = new_clause (true, clause->glue);
+    cls_res->imported = true;
+    cls_res->import_bc_heuristic = true;
     this->clause.clear();
     if (proof) proof->add_derived_clause (cls_res);
     assert (watching ());
@@ -765,6 +767,12 @@ int Internal::solve (bool preprocess_only) {
     if (!res) res = lucky_phases ();
     if (!res) res = cdcl_loop_with_inprocessing ();
   }
+
+  for (int i = 0; i < 10; i++) {
+    std::cout << "hey " << res << std::endl;
+    std::cout << "conflicts on import clauses: " << this->internal->stats.import.conflicts_on_imported_clauses << std::endl;
+  }
+
   reset_solving ();
   report_solving (res);
   STOP (solve);

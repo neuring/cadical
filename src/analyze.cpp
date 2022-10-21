@@ -692,6 +692,9 @@ void Internal::analyze () {
   // articulation points is not necessary.
   //
   Clause * reason = conflict;
+  if (reason->imported) {
+    this->stats.import.conflicts_on_imported_clauses += 1;
+  }
   LOG (reason, "analyzing conflict");
 
   assert (clause.empty ());
