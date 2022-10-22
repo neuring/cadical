@@ -95,7 +95,7 @@ OPTION( flushfactor,       3,  1,1e3,0,0,1, "interval increase") \
 OPTION( flushint,        1e5,  1,2e9,0,0,1, "initial limit") \
 OPTION( forcephase,        0,  0,  1,0,0,1, "always use initial phase") \
 OPTION( importheuristic,   0,  0,100,0,0,1, "import heuristic to use (0 = None, 1 = conflict probabiilty, 2 = conflict probability sum)") \
-OPTION( importpercent,   1.0,0.0,1.0,0,0,1, "the percentage of clauses to be imported.") \
+OPTION( importpercent,   100,  0,100,0,0,1, "the percentage of clauses to be imported.") \
 OPTION( inprocessing,      1,  0,  1,0,0,1, "enable inprocessing") \
 OPTION( instantiate,       0,  0,  1,0,1,1, "variable instantiation") \
 OPTION( instantiateclslim, 3,  2,2e9,0,0,1, "minimum clause size") \
@@ -120,7 +120,6 @@ OPTION( radixsortlim,    800,  0,2e9,0,0,1, "radix sort limit") \
 OPTION( realtime,          0,  0,  1,0,0,0, "real instead of process time") \
 OPTION( reduce,            1,  0,  1,0,0,1, "reduce useless clauses") \
 OPTION( reduceint,       300, 10,1e6,0,0,1, "reduce interval") \
-OPTION( reducestability,   0,  0,  1,0,0,1, "use literal stability instead of glue to reduce clauses") \
 OPTION( reducetarget,     75, 10,1e2,0,0,1, "reduce fraction in percent") \
 OPTION( reducetier1glue,   2,  1,2e9,0,0,1, "glue of kept learned clauses") \
 OPTION( reducetier2glue,   6,  1,2e9,0,0,1, "glue of tier two clauses") \

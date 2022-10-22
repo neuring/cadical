@@ -1052,12 +1052,11 @@ struct Internal {
     // Calculates an estimation of the probability that the given clause will become
     // a conflict clause, based on the gathered stability.
 
-    double calculate_estimated_conflict_probability(std::vector<int>&);
-    double calculate_estimated_conflict_probability(const Clause *);
-    double calculate_stability_sum(std::vector<int>&);
-    double calculate_stability_sum(const Clause *);
+    double clause_conflict_heuristic_product_norm(std::vector<int>&);
     double clause_conflict_heuristic_lukasiewicz(const std::vector<int>& clause);
     double clause_conflict_heuristic_average(const std::vector<int>& clause);
+    double clause_conflict_heuristic_min(const std::vector<int>& clause);
+    double clause_conflict_heuristic_second_min(const std::vector<int>& clause);
 
     bool terminating_asked();
 

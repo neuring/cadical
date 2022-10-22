@@ -9,7 +9,7 @@ namespace CaDiCaL {
         else return val;
     }
 
-    static ofstream* get_polarity_output_stream() {
+    static ofstream* get_stability_output_stream() {
         static ofstream *output_file = nullptr;
         if (output_file == nullptr) {
             output_file = new ofstream();
@@ -20,8 +20,6 @@ namespace CaDiCaL {
     }
 
     void Internal::sample_trail() {
-        auto control_iter = this->control.begin();
-
         // For right now we sample each variable, independent of whether its assigned or not.
         // If the current approach bears fruit, we will optimize it.
         for (int var : this->vars) {
@@ -74,44 +72,41 @@ namespace CaDiCaL {
         return result;
     }
 
-    double _calculate_estimated_conflict_probability(Internal *internal, const int *clause, size_t size) {
+    double Internal::clause_conflict_heuristic_product_norm(std::vector<int>& clause) {
         double probability = 1.0;
 
-        for (int i = 0; i < size; i++) {
-            auto lit = clause[i];
-
+        for (auto lit : clause) {
             probability *= probability_lit_is_false(internal, lit);
         }
 
         return probability;
     }
 
-    double Internal::calculate_estimated_conflict_probability(std::vector<int>& clause) {
-        return _calculate_estimated_conflict_probability(this, clause.data(), clause.size());
-    }
+    double Internal::clause_conflict_heuristic_min(const std::vector<int>& clause) {
+        double result = 1.0;
 
-    double Internal::calculate_estimated_conflict_probability(const Clause *clause) {
-        return _calculate_estimated_conflict_probability(this, clause->literals, clause->size);
-    }
-
-    static double _calculate_stability_sum(Internal *internal, const int *clause, size_t size) {
-        double sum = 1.0;
-
-        for (int i = 0; i < size; i++) {
-            auto lit = clause[i];
-            auto lit_prob = probability_lit_is_false(internal, lit);
-
-            sum += lit_prob;
+        for (auto lit : clause) {
+            result = std::min(result, probability_lit_is_false(internal, lit));
         }
 
-        return sum ;
+        return result;
     }
 
-    double Internal::calculate_stability_sum(std::vector<int>& clause) {
-        return _calculate_stability_sum(this, clause.data(), clause.size());
-    }
+    double Internal::clause_conflict_heuristic_second_min(const std::vector<int>& clause) {
+        double min = 1.0;
+        double snd_min = 1.0;
 
-    double Internal::calculate_stability_sum(const Clause* clause) {
-        return _calculate_stability_sum(this, clause->literals, clause->size);
+        for (auto lit : clause) {
+            auto prob = probability_lit_is_false(internal, lit);
+
+            if (prob < min) {
+                snd_min = min;
+                min = prob;
+            } else if (prob < snd_min) {
+                snd_min = prob;
+            }
+        }
+
+        return snd_min;
     }
 }

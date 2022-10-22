@@ -308,7 +308,7 @@ void Internal::import_redundant_clauses (int& res) {
         double heuristic = 0;
         switch (this->opts.importheuristic) {
           case 1: 
-            heuristic = 1.0 - this->calculate_estimated_conflict_probability(clause);
+            heuristic = 1.0 - this->clause_conflict_heuristic_product_norm(clause);
             break;
           case 2: 
             heuristic = this->clause_conflict_heuristic_average(clause);
@@ -316,9 +316,14 @@ void Internal::import_redundant_clauses (int& res) {
           case 3: 
             heuristic = this->clause_conflict_heuristic_lukasiewicz(clause);
             break;
+          case 4: 
+            heuristic = this->clause_conflict_heuristic_min(clause);
+            break;
+          case 5: 
+            heuristic = this->clause_conflict_heuristic_second_min(clause);
+            break;
           default: heuristic = 0;
         }
-        //std::cout << "heuristic = " << heuristic << std::endl;
 
         clause_candidates.push_back({clause, heuristic, glue});
         //printf("Learn non-unit clause\n");
@@ -361,10 +366,17 @@ void Internal::import_redundant_clauses (int& res) {
 
   // Sort clause candidates
   std::sort(clause_candidates.begin(), clause_candidates.end(), [](const auto& left, const auto& right) {
-    return left.heuristic < right.heuristic;
+    if (left.heuristic < right.heuristic) {
+      return true;
+    } else if (left.heuristic > right.heuristic) {
+      return false;
+    } else {
+      return left.clause.size() < right.clause.size();
+    };
   });
 
-  size_t num_elements_wanted = std::min((size_t) (clause_candidates.size() * this->opts.importpercent), clause_candidates.size());
+  double importratio = this->opts.importpercent / 100.0;
+  size_t num_elements_wanted = std::min((size_t) (clause_candidates.size() * importratio), clause_candidates.size());
   //std::cout << "num_elements_wanted = " << num_elements_wanted << ", size = " << clause_candidates.size() << std::endl;
   auto end_iter = std::next(clause_candidates.begin(), num_elements_wanted);
   for (auto clause = clause_candidates.begin(); clause != end_iter; clause += 1) {
@@ -766,11 +778,6 @@ int Internal::solve (bool preprocess_only) {
     if (!res) res = local_search ();
     if (!res) res = lucky_phases ();
     if (!res) res = cdcl_loop_with_inprocessing ();
-  }
-
-  for (int i = 0; i < 10; i++) {
-    std::cout << "hey " << res << std::endl;
-    std::cout << "conflicts on import clauses: " << this->internal->stats.import.conflicts_on_imported_clauses << std::endl;
   }
 
   reset_solving ();
