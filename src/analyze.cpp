@@ -729,33 +729,6 @@ void Internal::analyze () {
   stats.learned.literals += size;
   stats.learned.clauses++;
   assert (glue < size);
-  this->sample_trail();
-
-  // This is some code to print the stability histogram
-  //if (this->stats.conflicts % 1000 == 0) {
-
-  //  auto gen_hist = [this](const std::vector<EMA>& data){
-  //    constexpr int buckets = 10;
-
-  //    int hist[buckets] = {0};
-
-  //    for (const auto& ema : data) {
-  //      int bucket_idx = std::floor(ema.value * buckets);
-  //      if (buckets <= bucket_idx) bucket_idx = buckets - 1;
-  //      hist[bucket_idx] += 1;
-  //    }
-
-  //    std::string result;
-  //    for (int x : hist) {
-  //      result.append(" ");
-  //      result.append(std::to_string(x));
-  //    }
-  //    return std::move(result);
-  //  };
-
-  //  std::cout << "var stability true  stats:" << gen_hist(this->stability_true) << std::endl;
-  //  std::cout << "var stability false stats:" << gen_hist(this->stability_false) << std::endl;
-  //}
 
   // Minimize the 1st UIP clause as pioneered by Niklas Soerensson in
   // MiniSAT and described in our joint SAT'09 paper.
@@ -776,6 +749,27 @@ void Internal::analyze () {
     if (external->learner) external->export_learned_large_clause (clause, glue);
   } else if (external->learner)
     external->export_learned_unit_clause(-uip);
+
+  this->sample_trail();
+
+  if (/*this->stats.conflicts % 100 == 33*/ true) {
+    // Analyze with newly learned clause with different heuristics and store results.
+    double mean_heuristic        = this->clause_conflict_heuristic_average(clause);
+    double product_heuristic     = this->clause_conflict_heuristic_product_norm(clause);
+    double min_heuristic         = this->clause_conflict_heuristic_min(clause);
+    double snd_min_heuristic     = this->clause_conflict_heuristic_second_min(clause);
+    double lukasiewicz_heuristic = this->clause_conflict_heuristic_lukasiewicz(clause);
+    double count_heuristic       = this->clause_conflict_heuristic_count_avg(clause);
+
+    this->output << size << "," 
+                << glue << "," 
+                << mean_heuristic << "," 
+                << product_heuristic << "," 
+                << min_heuristic << "," 
+                << snd_min_heuristic << "," 
+                << lukasiewicz_heuristic << ","
+                << count_heuristic << std::endl;
+  }
 
   // Update actual size statistics.
   //

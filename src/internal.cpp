@@ -49,9 +49,19 @@ Internal::Internal ()
   external (0),
   termination_forced (false),
   vars (this->max_var),
-  lits (this->max_var)
+  lits (this->max_var),
+  output ("learned_clause_eval.data")
 {
   control.push_back (Level (0, 0));
+  this->output << "size," 
+               << "glue," 
+               << "mean," 
+               << "product,"
+               << "min,"
+               << "snd_min,"
+               << "lukasiewicz,"
+               << "count" << std::endl;
+  this->output.flush();
 }
 
 Internal::~Internal () {
@@ -61,6 +71,8 @@ Internal::~Internal () {
   if (tracer) delete tracer;
   if (checker) delete checker;
   if (vals) { vals -= vsize; delete [] vals; }
+  this->output.flush();
+  this->output.close();
 }
 
 /*------------------------------------------------------------------------*/
@@ -126,8 +138,8 @@ void Internal::enlarge (int new_max_var) {
   // Ordered in the size of allocated memory (larger block first).
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
-  enlarge_init (stability_true, 2*new_vsize, EMA(1./this->opts.varemawindow));
-  enlarge_init (stability_false, 2*new_vsize, EMA(1./this->opts.varemawindow));
+  enlarge_init (stability_true, 2*new_vsize, EMA(2./(1. + (double)this->opts.varemawindow)));
+  enlarge_init (stability_false, 2*new_vsize, EMA(2./(1. + (double)this->opts.varemawindow)));
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);

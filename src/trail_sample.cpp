@@ -19,6 +19,42 @@ namespace CaDiCaL {
         return output_file;
     }
 
+    double lit_stability_true(Internal *internal, const int lit) {
+        auto lit_prob = lit > 0 ? internal->stability_true [internal->vidx(lit)].value
+                                : internal->stability_false[internal->vidx(lit)].value;
+
+        assert(-0.001 <= lit_prob && lit_prob <= 1.001);
+        lit_prob = clamp(lit_prob, 0, 1);
+        return lit_prob;
+    }
+
+    double lit_stability_false(Internal *internal, const int lit) {
+        // The probability that the literal is false. Note how if lit is positive we sample from stability_false and reversed.
+        auto lit_prob = lit > 0 ? internal->stability_false[internal->vidx(lit)].value
+                                : internal->stability_true [internal->vidx(lit)].value;
+
+        assert(-0.001 <= lit_prob && lit_prob <= 1.001);
+        lit_prob = clamp(lit_prob, 0, 1);
+        return lit_prob;
+    }
+
+    double lit_stability_unassigned(Internal * internal, const int lit) {
+        double stability_true  = internal->stability_true [internal->vidx(lit)].value;
+        double stability_false = internal->stability_false[internal->vidx(lit)].value;
+
+        stability_true  = clamp(stability_true , 0, 1);
+        stability_false = clamp(stability_false, 0, 1);
+        return 1.0 - stability_true - stability_false;
+    }
+
+    double var_stability_polarity(Internal * internal, const int var) {
+        double stability_true  = internal->stability_true [internal->vidx(var)].value;
+        double stability_false = internal->stability_false[internal->vidx(var)].value;
+
+        if (stability_true + stability_false == 0) return 0.5;
+        else return stability_true / (stability_true + stability_false);
+    }
+
     void Internal::sample_trail() {
         // For right now we sample each variable, independent of whether its assigned or not.
         // If the current approach bears fruit, we will optimize it.
@@ -108,5 +144,15 @@ namespace CaDiCaL {
         }
 
         return snd_min;
+    }
+
+    double Internal::clause_conflict_heuristic_count_avg(const std::vector<int>& clause) {
+        int count = 0;
+
+        for (auto lit : clause) {
+            count += probability_lit_is_false(this, lit) >= 0.99 ? 1 : 0;
+        }
+
+        return ((double) count) / ((double)clause.size());
     }
 }

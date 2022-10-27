@@ -35,6 +35,7 @@ extern "C" {
 #include <string>
 #include <vector>
 #include <numeric>
+#include <fstream>
 
 /*------------------------------------------------------------------------*/
 
@@ -222,6 +223,8 @@ struct Internal {
 
   Internal * internal;          // proxy to 'this' in macros
   External * external;          // proxy to 'external' buddy in 'Solver'
+
+  ofstream output;               // Collected Data output file.
 
   /*----------------------------------------------------------------------*/
 
@@ -1057,6 +1060,7 @@ struct Internal {
     double clause_conflict_heuristic_average(const std::vector<int>& clause);
     double clause_conflict_heuristic_min(const std::vector<int>& clause);
     double clause_conflict_heuristic_second_min(const std::vector<int>& clause);
+    double clause_conflict_heuristic_count_avg(const std::vector<int>& clause);
 
     bool terminating_asked();
 
