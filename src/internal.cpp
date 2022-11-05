@@ -126,8 +126,8 @@ void Internal::enlarge (int new_max_var) {
   // Ordered in the size of allocated memory (larger block first).
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
-  enlarge_init (stability_true, 2*new_vsize, EMA(1./this->opts.varemawindow));
-  enlarge_init (stability_false, 2*new_vsize, EMA(1./this->opts.varemawindow));
+  enlarge_init (stability_true, 2*new_vsize, EMA(2./(this->opts.varemawindow + 1)));
+  enlarge_init (stability_false, 2*new_vsize, EMA(2./(this->opts.varemawindow + 1)));
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);
@@ -308,7 +308,7 @@ void Internal::import_redundant_clauses (int& res) {
         double heuristic = 0;
         switch (this->opts.importheuristic) {
           case 1: 
-            heuristic = 1.0 - this->clause_conflict_heuristic_product_norm(clause);
+            heuristic = this->clause_conflict_heuristic_product_norm(clause);
             break;
           case 2: 
             heuristic = this->clause_conflict_heuristic_average(clause);
@@ -321,6 +321,9 @@ void Internal::import_redundant_clauses (int& res) {
             break;
           case 5: 
             heuristic = this->clause_conflict_heuristic_second_min(clause);
+            break;
+          case 6:
+            heuristic = -this->clause_conflict_heuristic_unstable_lits(clause);
             break;
           default: heuristic = 0;
         }
@@ -366,9 +369,9 @@ void Internal::import_redundant_clauses (int& res) {
 
   // Sort clause candidates
   std::sort(clause_candidates.begin(), clause_candidates.end(), [](const auto& left, const auto& right) {
-    if (left.heuristic < right.heuristic) {
+    if (left.heuristic > right.heuristic) {
       return true;
-    } else if (left.heuristic > right.heuristic) {
+    } else if (left.heuristic < right.heuristic) {
       return false;
     } else {
       return left.clause.size() < right.clause.size();
@@ -377,15 +380,14 @@ void Internal::import_redundant_clauses (int& res) {
 
   double importratio = this->opts.importpercent / 100.0;
   size_t num_elements_wanted = std::min((size_t) (clause_candidates.size() * importratio), clause_candidates.size());
-  //std::cout << "num_elements_wanted = " << num_elements_wanted << ", size = " << clause_candidates.size() << std::endl;
   auto end_iter = std::next(clause_candidates.begin(), num_elements_wanted);
-  for (auto clause = clause_candidates.begin(); clause != end_iter; clause += 1) {
 
-    //std::cout << "Clause Heuristic " << clause->heuristic << std::endl;
+  for (auto import_clause = clause_candidates.begin(); import_clause != end_iter; ++import_clause){
+    //std::cout << "Clause Heuristic " << import_clause->heuristic << " (" << import_clause->clause.size() << ")" << std::endl;
     //std::cout << "Settings " << this->opts.importheuristic << ", " << this->opts.importpercent << std::endl;
 
-    this->clause = clause->clause;
-    Clause * cls_res = new_clause (true, clause->glue);
+    this->clause = import_clause->clause;
+    Clause * cls_res = new_clause (true, import_clause->glue);
     cls_res->imported = true;
     cls_res->import_bc_heuristic = true;
     this->clause.clear();

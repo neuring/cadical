@@ -109,4 +109,21 @@ namespace CaDiCaL {
 
         return snd_min;
     }
+
+    bool Internal::is_lit_stable(const int lit) {
+        double threshold = ((double) this->opts.stabilitythreshold) / 100.0;
+        return probability_lit_is_false(internal, lit) > threshold;
+    }
+
+    int Internal::clause_conflict_heuristic_unstable_lits(const std::vector<int>& clause) {
+        int stable_lits = 0;
+
+        for (auto lit : clause) {
+            if (this->is_lit_stable(lit)) {
+                stable_lits += 1;
+            }
+        }
+
+        return clause.size() - stable_lits;
+    }
 }

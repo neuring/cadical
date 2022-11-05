@@ -146,6 +146,7 @@ OPTION( shuffle,           0,  0,  1,0,0,1, "shuffle variables") \
 OPTION( shufflequeue,      1,  0,  1,0,0,1, "shuffle variable queue") \
 OPTION( shufflerandom,     0,  0,  1,0,0,1, "not reverse but random") \
 OPTION( shufflescores,     1,  0,  1,0,0,1, "shuffle variable scores") \
+OPTION( stabilitythreshold, 99,  0,  100,0,0,1, "enable stabilizing phases") \
 OPTION( stabilize,         1,  0,  1,0,0,1, "enable stabilizing phases") \
 OPTION( stabilizefactor, 200,101,2e9,0,0,1, "phase increase in percent") \
 OPTION( stabilizeint,    1e3,  1,2e9,0,0,1, "stabilizing interval") \
