@@ -50,6 +50,15 @@ namespace CaDiCaL {
         return lit_prob;
     }
 
+    double probability_lit_is_true(Internal *internal, const int lit) {
+        auto lit_prob = lit > 0 ? internal->stability_true [internal->vidx(lit)].value
+                                : internal->stability_false[internal->vidx(lit)].value;
+
+        assert(-0.001 <= lit_prob && lit_prob <= 1.001);
+        lit_prob = clamp(lit_prob, 0, 1);
+        return lit_prob;
+    }
+
     double Internal::clause_conflict_heuristic_average(const std::vector<int>& clause) {
         double sum = 0;
 
@@ -110,17 +119,36 @@ namespace CaDiCaL {
         return snd_min;
     }
 
-    bool Internal::is_lit_stable(const int lit) {
+    bool Internal::is_lit_stable_false(const int lit) {
         double threshold = ((double) this->opts.stabilitythreshold) / 100.0;
         return probability_lit_is_false(internal, lit) > threshold;
+    }
+
+    bool Internal::is_lit_stable_true(const int lit) {
+        double threshold = ((double) this->opts.stabilitythreshold) / 100.0;
+        return probability_lit_is_true(internal, lit) > threshold;
     }
 
     int Internal::clause_conflict_heuristic_unstable_lits(const std::vector<int>& clause) {
         int stable_lits = 0;
 
         for (auto lit : clause) {
-            if (this->is_lit_stable(lit)) {
+            if (this->is_lit_stable_false(lit)) {
                 stable_lits += 1;
+            }
+        }
+
+        return clause.size() - stable_lits;
+    }
+
+    int Internal::clause_conflict_heuristic_unstable_lits_minus_stable_lits(const std::vector<int>& clause) {
+        int stable_lits = 0;
+
+        for (auto lit : clause) {
+            if (this->is_lit_stable_false(lit)) {
+                stable_lits += 1;
+            } else if (this->is_lit_stable_true(lit)) {
+                stable_lits -= 1;
             }
         }
 
