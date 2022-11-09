@@ -325,6 +325,9 @@ void Internal::import_redundant_clauses (int& res) {
           case 6:
             heuristic = -this->clause_conflict_heuristic_unstable_lits(clause);
             break;
+          case 7:
+            heuristic = -this->clause_conflict_heuristic_unstable_lits_minus_stable_lits(clause);
+            break;
           default: heuristic = 0;
         }
 
