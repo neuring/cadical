@@ -218,6 +218,8 @@ struct Stats {
   struct {
     int64_t conflicts_on_imported_clauses;
     int64_t propagations_on_imported_clauses;
+    int64_t imported_clauses;
+    int64_t imported_clauses_bc_selection_heuristic;
   } import;
 
   int64_t unused;        // number of unused variables

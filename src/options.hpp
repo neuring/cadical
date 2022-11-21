@@ -94,8 +94,11 @@ OPTION( flush,             0,  0,  1,0,0,1, "flush redundant clauses") \
 OPTION( flushfactor,       3,  1,1e3,0,0,1, "interval increase") \
 OPTION( flushint,        1e5,  1,2e9,0,0,1, "initial limit") \
 OPTION( forcephase,        0,  0,  1,0,0,1, "always use initial phase") \
-OPTION( importheuristic,   0,  0,100,0,0,1, "import heuristic to use (0 = None, 1 = conflict probabiilty, 2 = conflict probability sum)") \
-OPTION( importpercent,   100,  0,100,0,0,1, "the percentage of clauses to be imported.") \
+OPTION( importbuffersize,        1500,  0,2e9,0,0,1, "corresponds to mallobs clause base buffer size. Used in combination with importpercent option.") \
+OPTION( importfallbackheuristic,    0,  0,100,0,0,1, "heuristic which chooses the remaining clauses after the selection heuristic to meet importpercent.") \
+OPTION( importpercent,            100,  0,100,0,0,1, "the percentage of clauses to be imported.") \
+OPTION( importselectionheuristic,   0,  0,100,0,0,1, "heuristic which select clauses.") \
+OPTION( importselectionthreshold,   0,  0,100,0,0,1, "threshold of the selection heuristic. clauses which surpass this threshold are imported") \
 OPTION( inprocessing,      1,  0,  1,0,0,1, "enable inprocessing") \
 OPTION( instantiate,       0,  0,  1,0,1,1, "variable instantiation") \
 OPTION( instantiateclslim, 3,  2,2e9,0,0,1, "minimum clause size") \
