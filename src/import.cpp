@@ -5,10 +5,24 @@
 
 namespace CaDiCaL {
 
+namespace HeuristicCode {
+  enum HeuristicCode {
+    NO_HEURISTIC = -1,
+    SIZE = 0,
+    PRODUCT_NORM = 1,
+    AVERAGE = 2,
+    LUKASIEWIECZ = 3,
+    MIN_NORM = 4,
+    SECOND_MIN = 5,
+    UNSTABLE_LITERALS = 6,
+    UNSTABLE_LITERALS_MOD = 7,
+    LITERAL_SCORE_SUM = 8,
+  };
+}
+
 class Heuristic {
     public:
       virtual bool higher_is_better() = 0; // If a clause with a higher heuristic value is considered better than a clause with a lower heuristic value.
-      virtual double heuristic_bound() = 0; // Heuristic value that is theoretically the best value, except that no clause can ever achieve this value.
       virtual double eval_clause(Internal*, std::vector<int>&) = 0;
 
       // is heuristic value a better than heuristic value b.
@@ -26,8 +40,8 @@ class SizeHeuristic : public Heuristic {
       SizeHeuristic() = default;
 
       virtual bool higher_is_better() { return false; };
-      virtual double heuristic_bound() { return 0; };
       virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
+          (void) internal;
           return clause.size();
       }
 };
@@ -37,7 +51,6 @@ class ProductNormHeuristic : public Heuristic {
       ProductNormHeuristic() = default;
 
       virtual bool higher_is_better() { return true; };
-      virtual double heuristic_bound() { return 2.0; };
       virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
           return internal->clause_conflict_heuristic_product_norm(clause);
       }
@@ -48,7 +61,6 @@ class AverageHeuristic : public Heuristic {
     AverageHeuristic() = default;
 
     virtual bool higher_is_better() { return true; };
-    virtual double heuristic_bound() { return 2.0; };
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
         return internal->clause_conflict_heuristic_average(clause);
     }
@@ -59,7 +71,6 @@ class LukasiewieczHeuristic : public Heuristic {
     LukasiewieczHeuristic() = default;
 
     virtual bool higher_is_better() { return true; };
-    virtual double heuristic_bound() { return 2.0; };
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
         return internal->clause_conflict_heuristic_lukasiewicz(clause);
     }
@@ -70,7 +81,6 @@ class MinNormHeuristic : public Heuristic {
     MinNormHeuristic() = default;
 
     virtual bool higher_is_better() { return true; };
-    virtual double heuristic_bound() { return 2.0; };
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
         return internal->clause_conflict_heuristic_min(clause);
     }
@@ -81,7 +91,6 @@ class SecondMinHeuristic : public Heuristic {
     SecondMinHeuristic() = default;
 
     virtual bool higher_is_better() { return true; };
-    virtual double heuristic_bound() { return 2.0; };
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
         return internal->clause_conflict_heuristic_second_min(clause);
     }
@@ -92,7 +101,6 @@ class UnstableLiteralsHeuristic : public Heuristic {
     UnstableLiteralsHeuristic() = default;
 
     virtual bool higher_is_better() { return false;};
-    virtual double heuristic_bound() { return -1.0; };
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
         return internal->clause_conflict_heuristic_unstable_lits(clause);
     }
@@ -103,9 +111,18 @@ class UnstableLiteralsModifiedHeuristic : public Heuristic {
     UnstableLiteralsModifiedHeuristic() = default;
 
     virtual bool higher_is_better() { return false;};
-    virtual double heuristic_bound() { return -1.0; };
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
         return internal->clause_conflict_heuristic_unstable_lits_minus_stable_lits(clause);
+    }
+};
+
+class LiteralScoreSum : public Heuristic {
+  public:
+    LiteralScoreSum() = default;
+
+    virtual bool higher_is_better() { return false;};
+    virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
+        return internal->clause_conflict_heuristic_literal_score_sum(clause);
     }
 };
 
@@ -119,6 +136,7 @@ std::unique_ptr<Heuristic> get_heuristic_from_code(int code) {
     case 5: return std::make_unique<SecondMinHeuristic>();
     case 6: return std::make_unique<UnstableLiteralsHeuristic>();
     case 7: return std::make_unique<UnstableLiteralsModifiedHeuristic>();
+    case 8: return std::make_unique<LiteralScoreSum>();
     default: 
       assert(false); 
       return std::make_unique<SizeHeuristic>();
@@ -165,17 +183,19 @@ std::vector<IndexWithHeuristic> create_index_vector(Internal *internal, std::uni
     ordered_indices[i].heuristic = heuristic->eval_clause(internal, clause_candidates[i].clause);
   }
 
-  std::sort(ordered_indices.begin(), ordered_indices.end(), [&heuristic, &clause_candidates](const auto& left, const auto& right) {
-    if (left.heuristic < right.heuristic) {
-      return !heuristic->higher_is_better();
-    } else if (left.heuristic > right.heuristic) {
-      return heuristic->higher_is_better();
-    } else {
-      double left_size = clause_candidates[left.clause_idx].clause.size();
-      double right_size = clause_candidates[right.clause_idx].clause.size();
-      return left_size < right_size;
-    };
-  });
+  if (internal->opts.importfallbackheuristic != HeuristicCode::SIZE) { // Since mallob sorts the imported clauses by size by default there is no need to sort them if the size heuristic is selected.
+    std::sort(ordered_indices.begin(), ordered_indices.end(), [&heuristic, &clause_candidates](const auto& left, const auto& right) {
+      if (left.heuristic < right.heuristic) {
+        return !heuristic->higher_is_better();
+      } else if (left.heuristic > right.heuristic) {
+        return heuristic->higher_is_better();
+      } else {
+        double left_size = clause_candidates[left.clause_idx].clause.size();
+        double right_size = clause_candidates[right.clause_idx].clause.size();
+        return left_size < right_size;
+      };
+    });
+  }
 
   return ordered_indices;
 }
@@ -190,26 +210,30 @@ std::string clause_to_string(std::vector<int>& clause) {
 }
 
 void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithGlue> clause_candidates, size_t already_imported) {
-
-  auto selection_heuristic = get_heuristic_from_code(internal->opts.importselectionheuristic);
-  std::vector<IndexWithHeuristic> selection_heuristic_order = create_index_vector(internal, selection_heuristic, clause_candidates);
-  std::vector<bool> selected_clauses(clause_candidates.size());
   double importratio = internal->opts.importpercent / 100.0;
   double importselectionthreshold = internal->opts.importselectionthreshold / 100.0;
   int imported_clauses = 0;
 
-  for (auto selected_clause : selection_heuristic_order) {
-    if ((double) already_imported / (double) internal->opts.importbuffersize >= importratio) {
-      break; // We already reached the import limit.
-    }
+  std::vector<bool> selected_clauses(clause_candidates.size());
 
-    if (selection_heuristic->is_better(selected_clause.heuristic, importselectionthreshold)) {
-      auto& selected = clause_candidates[selected_clause.clause_idx];
-      add_new_imported_clause(internal, selected, true);
+  // Only select if a selection heuristic was actually selected.
+  if (internal->opts.importselectionheuristic != HeuristicCode::NO_HEURISTIC) {
+    auto selection_heuristic = get_heuristic_from_code(internal->opts.importselectionheuristic);
+    std::vector<IndexWithHeuristic> selection_heuristic_order = create_index_vector(internal, selection_heuristic, clause_candidates);
 
-      already_imported += selected.clause.size() + 1;
-      selected_clauses[selected_clause.clause_idx] = true;
-      imported_clauses += 1;
+    for (auto selected_clause : selection_heuristic_order) {
+      if ((double) already_imported / (double) internal->opts.importbuffersize >= importratio) {
+        break; // We already reached the import limit.
+      }
+
+      if (selection_heuristic->is_better(selected_clause.heuristic, importselectionthreshold)) {
+        auto& selected = clause_candidates[selected_clause.clause_idx];
+        add_new_imported_clause(internal, selected, true);
+
+        already_imported += selected.clause.size() + 1;
+        selected_clauses[selected_clause.clause_idx] = true;
+        imported_clauses += 1;
+      }
     }
   }
 

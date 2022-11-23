@@ -59,6 +59,14 @@ namespace CaDiCaL {
         return lit_prob;
     }
 
+    double probability_lit_is_unassigned(Internal *internal, const int lit) {
+        auto lit_prob = 1.0 - internal->stability_false[internal->vidx(lit)].value - internal->stability_true[internal->vidx(lit)].value;
+
+        assert(-0.001 <= lit_prob && lit_prob <= 1.001);
+        lit_prob = clamp(lit_prob, 0, 1);
+        return lit_prob;
+    }
+
     double Internal::clause_conflict_heuristic_average(const std::vector<int>& clause) {
         double sum = 0;
 
@@ -153,5 +161,22 @@ namespace CaDiCaL {
         }
 
         return clause.size() - stable_lits;
+    }
+
+    double Internal::clause_conflict_heuristic_literal_score_sum(const std::vector<int>& clause) {
+        double true_penalty = this->opts.trueliteralpenalty / 100.0;
+
+        double result = 0.0;
+
+        for (auto lit : clause) {
+            double lit_unass = probability_lit_is_unassigned(this, lit);
+            double lit_true = probability_lit_is_true(this, lit);
+            double lit_false = probability_lit_is_false(this, lit);
+
+            double lit_score = lit_unass + (1 - lit_unass) * (lit_true / (lit_false + lit_true)) * true_penalty;
+            result += lit_score;
+        }
+
+        return result;
     }
 }

@@ -97,8 +97,8 @@ OPTION( forcephase,        0,  0,  1,0,0,1, "always use initial phase") \
 OPTION( importbuffersize,        1500,  0,2e9,0,0,1, "corresponds to mallobs clause base buffer size. Used in combination with importpercent option.") \
 OPTION( importfallbackheuristic,    0,  0,100,0,0,1, "heuristic which chooses the remaining clauses after the selection heuristic to meet importpercent.") \
 OPTION( importpercent,            100,  0,100,0,0,1, "the percentage of clauses to be imported.") \
-OPTION( importselectionheuristic,   0,  0,100,0,0,1, "heuristic which select clauses.") \
-OPTION( importselectionthreshold,   0,  0,100,0,0,1, "threshold of the selection heuristic. clauses which surpass this threshold are imported") \
+OPTION( importselectionheuristic,  -1, -1,100,0,0,1, "heuristic which select clauses. -1 disables selection mode") \
+OPTION( importselectionthreshold,   0,  0,1050,0,0,1, "threshold of the selection heuristic. clauses which surpass this threshold are imported") \
 OPTION( inprocessing,      1,  0,  1,0,0,1, "enable inprocessing") \
 OPTION( instantiate,       0,  0,  1,0,1,1, "variable instantiation") \
 OPTION( instantiateclslim, 3,  2,2e9,0,0,1, "minimum clause size") \
@@ -178,6 +178,7 @@ OPTION( transred,          1,  0,  1,0,1,1, "transitive reduction of BIG") \
 OPTION( transredmaxeff,  1e8,  0,2e9,1,0,1, "maximum efficiency") \
 OPTION( transredmineff,  1e6,  0,2e9,1,0,1, "minimum efficiency") \
 OPTION( transredreleff,  1e2,  1,1e5,1,0,1, "relative efficiency per mille") \
+OPTION( trueliteralpenalty, 100, 0, 2e9,0,0,1, "Import heuristic argument which penalize stable true literals") \
 OPTION( varemawindow,    500,  1,2e9,0,0,1, "ema window for variable stats") \
 QUTOPT( verbose,           0,  0,  3,0,0,0, "more verbose messages") \
 OPTION( vivify,            1,  0,  1,0,1,1, "vivification") \

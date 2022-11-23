@@ -791,6 +791,8 @@ Solver::Statistics Solver::get_stats () {
   s.propagations += internal->stats.propagations.walk;
   s.conflicts_on_imported_clauses = internal->stats.import.conflicts_on_imported_clauses;
   s.propagations_on_imported_clauses = internal->stats.import.propagations_on_imported_clauses;
+  s.imported_clauses = internal->stats.import.imported_clauses;
+  s.imported_clauses_bc_selection_heuristic = internal->stats.import.imported_clauses_bc_selection_heuristic;
   s.restarts = internal->stats.restarts;
   return s;
 }

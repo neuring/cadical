@@ -295,6 +295,8 @@ public:
     int64_t restarts;     // total # restarts
     int64_t conflicts_on_imported_clauses;
     int64_t propagations_on_imported_clauses;
+    int64_t imported_clauses;
+    int64_t imported_clauses_bc_selection_heuristic;
   };
   Statistics get_stats ();
 
