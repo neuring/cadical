@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <numeric>
 
 namespace CaDiCaL {
 
@@ -209,9 +210,31 @@ std::string clause_to_string(std::vector<int>& clause) {
   return result.str();
 }
 
+// Determine how many clauses can be imported.
+// This is based on how many clauses the default size heuristic would have imported, if the clause buffer were reduced by the importpercent option.
+size_t determine_clause_count(Internal *internal, std::vector<ClauseWithGlue>& clause_candidates) {
+  const size_t total_literals = std::accumulate(clause_candidates.begin(), clause_candidates.end(), 0, [](const int& acc, const ClauseWithGlue& elem){ 
+    return elem.clause.size() + 1 + acc;
+  });
+
+  const size_t import_literal_limit = (total_literals * internal->opts.importpercent) / 100;
+
+  size_t running_literal_total = 0;
+  for (size_t i = 0; i < clause_candidates.size(); i++) {
+    running_literal_total += clause_candidates[i].clause.size() + 1;
+
+    if (running_literal_total >= import_literal_limit) {
+      return i;
+    }
+  }
+
+  assert(false); // unreacheable
+  return -1;
+}
+
 void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithGlue> clause_candidates, size_t already_imported) {
-  double importratio = internal->opts.importpercent / 100.0;
   double importselectionthreshold = internal->opts.importselectionthreshold / 100.0;
+  int imported_clause_limit = determine_clause_count(internal, clause_candidates);
   int imported_clauses = 0;
 
   std::vector<bool> selected_clauses(clause_candidates.size());
@@ -222,8 +245,8 @@ void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithG
     std::vector<IndexWithHeuristic> selection_heuristic_order = create_index_vector(internal, selection_heuristic, clause_candidates);
 
     for (auto selected_clause : selection_heuristic_order) {
-      if ((double) already_imported / (double) internal->opts.importbuffersize >= importratio) {
-        break; // We already reached the import limit.
+      if (imported_clauses >= imported_clause_limit) {
+        break;
       }
 
       if (selection_heuristic->is_better(selected_clause.heuristic, importselectionthreshold)) {
@@ -248,8 +271,8 @@ void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithG
   //}
 
   for (auto selected_clause : fallback_heuristic_order) {
-    if ((double) already_imported / (double) internal->opts.importbuffersize >= importratio) {
-      break; // We already reached the import limit.
+    if (imported_clauses >= imported_clause_limit) {
+      break;
     }
 
     if (selected_clauses[selected_clause.clause_idx] == false) { // Clause hasn't been selected by the selection heuristic.
