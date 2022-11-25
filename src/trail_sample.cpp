@@ -171,9 +171,10 @@ namespace CaDiCaL {
         for (auto lit : clause) {
             double lit_unass = probability_lit_is_unassigned(this, lit);
             double lit_true = probability_lit_is_true(this, lit);
-            double lit_false = probability_lit_is_false(this, lit);
 
-            double lit_score = lit_unass + (1 - lit_unass) * (lit_true / (lit_false + lit_true)) * true_penalty;
+            // This is a simplified version of the following calculation:
+            // lit_unass + (1 - lit_unass) * (lit_true / (lit_false + lit_true)) * true_penalty;
+            double lit_score = lit_unass + lit_true * true_penalty;
             result += lit_score;
         }
 
