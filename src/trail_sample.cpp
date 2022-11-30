@@ -149,18 +149,21 @@ namespace CaDiCaL {
         return clause.size() - stable_lits;
     }
 
-    int Internal::clause_conflict_heuristic_unstable_lits_minus_stable_lits(const std::vector<int>& clause) {
-        int stable_lits = 0;
+    double Internal::clause_conflict_heuristic_unstable_lits_minus_stable_lits(const std::vector<int>& clause) {
+        double true_penalty = this->opts.trueliteralpenalty / 100.0;
+        double result = 0.0;
 
         for (auto lit : clause) {
             if (this->is_lit_stable_false(lit)) {
-                stable_lits += 1;
+                
             } else if (this->is_lit_stable_true(lit)) {
-                stable_lits -= 1;
+                result += true_penalty;
+            } else {
+                result += 1; // Literal is mostly unassigned
             }
         }
 
-        return clause.size() - stable_lits;
+        return result;
     }
 
     double Internal::clause_conflict_heuristic_literal_score_sum(const std::vector<int>& clause) {
