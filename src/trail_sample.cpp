@@ -23,19 +23,89 @@ namespace CaDiCaL {
         // For right now we sample each variable, independent of whether its assigned or not.
         // If the current approach bears fruit, we will optimize it.
         for (int var : this->vars) {
+            
             switch (this->val(var)) {
                 case 0: 
                     UPDATE_AVERAGE(this->stability_true[var], 0);
                     UPDATE_AVERAGE(this->stability_false[var], 0);
+                    this->cema_stability_true[var].update(0);
+                    this->cema_stability_false[var].update(0);
                     break;
                 case 1: 
                     UPDATE_AVERAGE(this->stability_true[var], 1);
                     UPDATE_AVERAGE(this->stability_false[var], 0);
+                    this->cema_stability_true[var].update(1);
+                    this->cema_stability_false[var].update(0);
                     break;
                 case -1: 
                     UPDATE_AVERAGE(this->stability_true[var], 0);
                     UPDATE_AVERAGE(this->stability_false[var], 1);
+                    this->cema_stability_true[var].update(0);
+                    this->cema_stability_false[var].update(1);
                     break;
+            }
+
+            if (var == 1) {
+                //std::cout << "Sampling 1 with " << (int)this->val(var) << ", value=" << this->cema_stability_true[var].value() << std::endl;
+            }
+        }
+    }
+
+    void Internal::update_stability(int var, int new_assignment) {
+        var = this->vidx(var);
+        int conflicts_since_last_update = this->stats.conflicts - this->stability_last_update[var];
+        if (conflicts_since_last_update == 0) return;
+
+        this->stability_last_update[var] = this->stats.conflicts;
+
+        int current_assignment = this->vals[var];
+
+        assert(current_assignment == 0 ? new_assignment != 0 : new_assignment == 0);
+        switch (current_assignment) {
+            case 0: 
+                this->cema_stability_true_bulk[var].bulk_update(0, conflicts_since_last_update);
+                this->cema_stability_false_bulk[var].bulk_update(0, conflicts_since_last_update);
+                break;
+            case 1: 
+                this->cema_stability_true_bulk[var].bulk_update(1, conflicts_since_last_update);
+                this->cema_stability_false_bulk[var].bulk_update(0, conflicts_since_last_update);
+                break;
+            case -1: 
+                this->cema_stability_true_bulk[var].bulk_update(0, conflicts_since_last_update);
+                this->cema_stability_false_bulk[var].bulk_update(1, conflicts_since_last_update);
+                break;
+            default: assert(false); // unreacheable
+        }
+
+        if (var == 1) {
+            //std::cout << "bulk assigning 1 with " << current_assignment << " (" << conflicts_since_last_update << "), value=" << this->cema_stability_true_bulk[var].value() << std::endl;
+        }
+    }
+
+    void Internal::update_stability_values_same_epoch() {
+        for (int var : this->vars) {
+            int conflicts_since_last_update = this->stats.conflicts - this->stability_last_update[var];
+            this->stability_last_update[var] = this->stats.conflicts;
+            int current_assignment = this->vals[var];
+
+            switch (current_assignment) {
+                case 0: 
+                    this->cema_stability_true_bulk[var].bulk_update(0, conflicts_since_last_update);
+                    this->cema_stability_false_bulk[var].bulk_update(0, conflicts_since_last_update);
+                    break;
+                case 1: 
+                    this->cema_stability_true_bulk[var].bulk_update(1, conflicts_since_last_update);
+                    this->cema_stability_false_bulk[var].bulk_update(0, conflicts_since_last_update);
+                    break;
+                case -1: 
+                    this->cema_stability_true_bulk[var].bulk_update(0, conflicts_since_last_update);
+                    this->cema_stability_false_bulk[var].bulk_update(1, conflicts_since_last_update);
+                    break;
+                default: assert(false); // unreacheable
+            }
+
+            if (var == 1) {
+                //std::cout << "epoch synchronizing 1 with " << current_assignment << " (" << conflicts_since_last_update << "), value=" << this->cema_stability_true_bulk[var].value() << std::endl;
             }
         }
     }

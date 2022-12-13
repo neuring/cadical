@@ -51,6 +51,7 @@ extern "C" {
 #include "bins.hpp"
 #include "block.hpp"
 #include "cadical.hpp"
+#include "cema.hpp"
 #include "checker.hpp"
 #include "clause.hpp"
 #include "config.hpp"
@@ -162,6 +163,11 @@ struct Internal {
   signed char * vals;           // assignment [-max_var,max_var]
   vector<EMA> stability_true;   // the local ratio that a variable is true  (vs. false or unassigned)
   vector<EMA> stability_false;  // the local ratio that a variable is false (vs. true  or unassigned)
+  vector<CEMA> cema_stability_true;   // the local ratio that a variable is true  (vs. false or unassigned)
+  vector<CEMA> cema_stability_false;  // the local ratio that a variable is false (vs. true  or unassigned)
+  vector<CEMA> cema_stability_true_bulk;   // the local ratio that a variable is true  (vs. false or unassigned)
+  vector<CEMA> cema_stability_false_bulk;  // the local ratio that a variable is false (vs. true  or unassigned)
+  vector<int64_t> stability_last_update; // stores the last conflict when this variable stability value was last updated.
   vector<signed char> marks;    // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'
@@ -1048,6 +1054,9 @@ struct Internal {
 
     // Trail Sampling
     void sample_trail();
+
+    void update_stability(int var, int assignment);
+    void update_stability_values_same_epoch();
 
     // Calculates an estimation of the probability that the given clause will become
     // a conflict clause, based on the gathered stability.

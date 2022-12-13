@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include<iostream>
 
 namespace CaDiCaL {
 
@@ -70,6 +71,7 @@ inline void Internal::search_assign (int lit, Clause * reason) {
   v.reason = reason;
   if (!lit_level) learn_unit_clause (lit);  // increases 'stats.fixed'
   const signed char tmp = sign (lit);
+  this->update_stability(idx, tmp);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);
@@ -379,8 +381,6 @@ bool Internal::propagate () {
       no_conflict_until = control[level].trail;
     }
   }
-
-  //this->sample_trail();
 
   STOP (propagate);
 

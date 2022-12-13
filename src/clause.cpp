@@ -301,6 +301,7 @@ void Internal::assign_original_unit (int lit) {
   v.trail = (int) trail.size ();
   v.reason = 0;
   const signed char tmp = sign (lit);
+  this->update_stability(idx, tmp);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);
