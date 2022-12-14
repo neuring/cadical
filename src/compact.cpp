@@ -353,10 +353,6 @@ void Internal::compact () {
   mapper.map_vector (gtab);
   mapper.map_vector (links);
   mapper.map_vector (vtab);
-  mapper.map_vector (stability_true);
-  mapper.map_vector (stability_false);
-  mapper.map_vector (cema_stability_true);
-  mapper.map_vector (cema_stability_false);
   mapper.map_vector (cema_stability_true_bulk);
   mapper.map_vector (cema_stability_false_bulk);
   mapper.map_vector (stability_last_update);
