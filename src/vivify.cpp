@@ -57,7 +57,6 @@ inline void Internal::vivify_assign (int lit, Clause * reason) {
   v.reason = level ? reason : 0;        // for conflict analysis
   if (!level) learn_unit_clause (lit);
   const signed char tmp = sign (lit);
-  this->update_stability(idx);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);

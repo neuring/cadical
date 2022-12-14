@@ -71,7 +71,6 @@ inline void Internal::search_assign (int lit, Clause * reason) {
   v.reason = reason;
   if (!lit_level) learn_unit_clause (lit);  // increases 'stats.fixed'
   const signed char tmp = sign (lit);
-  this->update_stability(idx);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);

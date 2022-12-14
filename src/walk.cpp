@@ -245,7 +245,6 @@ void Internal::walk_flip_lit (Walker & walker, int lit) {
   //
   const int tmp = sign (lit);
   const int idx = abs (lit);
-  this->update_stability(idx);
   vals[idx] = tmp;
   vals[-idx] = -tmp;
   assert (val (lit) > 0);
@@ -464,7 +463,6 @@ int Internal::walk_round (int64_t limit, bool prev) {
       tmp = sign (lit);
       const int idx = abs (lit);
       LOG ("initial assign %d to assumption phase", tmp < 0 ? -idx : idx);
-      this->update_stability(idx);
       vals[idx] = tmp;
       vals[-idx] = -tmp;
       assert (level == 1);
@@ -492,7 +490,6 @@ int Internal::walk_round (int64_t limit, bool prev) {
       if (prev) tmp = phases.prev[idx];
       if (!tmp) tmp = sign (decide_phase (idx, true));
       assert (tmp == 1 || tmp == -1);
-      this->update_stability(idx);
       vals[idx] = tmp;
       vals[-idx] = -tmp;
       assert (level == 2);
@@ -639,7 +636,6 @@ int Internal::walk_round (int64_t limit, bool prev) {
 
   for (auto idx : vars)
     if (active (idx)) {
-      this->update_stability(idx);
       vals[idx] = vals[-idx] = 0;
     }
 
