@@ -161,10 +161,6 @@ struct Internal {
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
   signed char * vals;           // assignment [-max_var,max_var]
-  vector<EMA> stability_true;   // the local ratio that a variable is true  (vs. false or unassigned)
-  vector<EMA> stability_false;  // the local ratio that a variable is false (vs. true  or unassigned)
-  vector<CEMA> cema_stability_true;   // the local ratio that a variable is true  (vs. false or unassigned)
-  vector<CEMA> cema_stability_false;  // the local ratio that a variable is false (vs. true  or unassigned)
   vector<CEMA> cema_stability_true_bulk;   // the local ratio that a variable is true  (vs. false or unassigned)
   vector<CEMA> cema_stability_false_bulk;  // the local ratio that a variable is false (vs. true  or unassigned)
   vector<int64_t> stability_last_update; // stores the last conflict when this variable stability value was last updated.
@@ -1054,8 +1050,6 @@ struct Internal {
     int lookahead_locc(const std::vector<int> &);
 
     // Trail Sampling
-    void sample_trail();
-
     void update_stability(int var);
     void update_stability_all_variables();
 

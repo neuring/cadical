@@ -127,10 +127,6 @@ void Internal::enlarge (int new_max_var) {
   // Ordered in the size of allocated memory (larger block first).
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
-  enlarge_init (stability_true, 2*new_vsize, EMA(2./(this->opts.varemawindow + 1)));
-  enlarge_init (stability_false, 2*new_vsize, EMA(2./(this->opts.varemawindow + 1)));
-  enlarge_init (cema_stability_true, 2*new_vsize, CEMA());
-  enlarge_init (cema_stability_false, 2*new_vsize, CEMA());
   enlarge_init (cema_stability_true_bulk, 2*new_vsize, CEMA());
   enlarge_init (cema_stability_false_bulk, 2*new_vsize, CEMA());
   enlarge_zero (stability_last_update, 2*new_vsize);
@@ -206,25 +202,6 @@ int Internal::cdcl_loop_with_inprocessing () {
   else        { START (unstable); report ('{'); }
 
   while (!res) {
-    if (this->level == 0) {
-      this->update_stability_all_variables();
-      for (int var : this->vars) {
-        assert(std::abs(this->cema_stability_true[var].value() - this->cema_stability_true_bulk[var].value()) < 1e-7);
-        assert(std::abs(this->cema_stability_false[var].value() - this->cema_stability_false_bulk[var].value()) < 1e-7);
-        std::cout 
-        << var 
-          << " "
-          << this->cema_stability_true[var].value() 
-          << ":"
-          << this->cema_stability_false[var].value() 
-          << ","
-          << this->cema_stability_true_bulk[var].value() 
-          << ":"
-          << this->cema_stability_false_bulk[var].value() 
-          << std::endl;
-      }
-    }
-
          if (unsat) res = 20;
     else if (unsat_constraint) res = 20;
     else if (!propagate ()) analyze ();      // propagate and analyze

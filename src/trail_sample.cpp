@@ -19,39 +19,8 @@ namespace CaDiCaL {
         return output_file;
     }
 
-    void Internal::sample_trail() {
-        // For right now we sample each variable, independent of whether its assigned or not.
-        // If the current approach bears fruit, we will optimize it.
-        for (int var : this->vars) {
-            
-            switch (this->val(var)) {
-                case 0: 
-                    UPDATE_AVERAGE(this->stability_true[var], 0);
-                    UPDATE_AVERAGE(this->stability_false[var], 0);
-                    this->cema_stability_true[var].update(0, this->stability_ema_alpha);
-                    this->cema_stability_false[var].update(0, this->stability_ema_alpha);
-                    break;
-                case 1: 
-                    UPDATE_AVERAGE(this->stability_true[var], 1);
-                    UPDATE_AVERAGE(this->stability_false[var], 0);
-                    this->cema_stability_true[var].update(1, this->stability_ema_alpha);
-                    this->cema_stability_false[var].update(0, this->stability_ema_alpha);
-                    break;
-                case -1: 
-                    UPDATE_AVERAGE(this->stability_true[var], 0);
-                    UPDATE_AVERAGE(this->stability_false[var], 1);
-                    this->cema_stability_true[var].update(0, this->stability_ema_alpha);
-                    this->cema_stability_false[var].update(1, this->stability_ema_alpha);
-                    break;
-            }
-
-            if (var == 1) {
-                //std::cout << "Sampling 1 with " << (int)this->val(var) << ", value=" << this->cema_stability_true[var].value() << std::endl;
-            }
-        }
-    }
-
     void Internal::update_stability(int var) {
+        var = this->vidx(var);
         int conflicts_since_last_update = this->stats.conflicts - this->stability_last_update[var];
         if (conflicts_since_last_update == 0) return;
         this->stability_last_update[var] = this->stats.conflicts;
@@ -82,8 +51,8 @@ namespace CaDiCaL {
 
     double probability_lit_is_false(Internal *internal, const int lit) {
         // The probability that the literal is false. Note how if lit is positive we sample from stability_false and reversed.
-        auto lit_prob = lit > 0 ? internal->stability_false[internal->vidx(lit)].value
-                                : internal->stability_true [internal->vidx(lit)].value;
+        auto lit_prob = lit > 0 ? internal->cema_stability_false_bulk[internal->vidx(lit)].value()
+                                : internal->cema_stability_true_bulk [internal->vidx(lit)].value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1); // Apparently the cadicals EMA implementation doesn't guarante that its value is between the lowest and highest value provided.
@@ -91,8 +60,8 @@ namespace CaDiCaL {
     }
 
     double probability_lit_is_true(Internal *internal, const int lit) {
-        auto lit_prob = lit > 0 ? internal->stability_true [internal->vidx(lit)].value
-                                : internal->stability_false[internal->vidx(lit)].value;
+        auto lit_prob = lit > 0 ? internal->cema_stability_true_bulk [internal->vidx(lit)].value()
+                                : internal->cema_stability_false_bulk[internal->vidx(lit)].value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
@@ -100,7 +69,7 @@ namespace CaDiCaL {
     }
 
     double probability_lit_is_unassigned(Internal *internal, const int lit) {
-        auto lit_prob = 1.0 - internal->stability_false[internal->vidx(lit)].value - internal->stability_true[internal->vidx(lit)].value;
+        auto lit_prob = 1.0 - internal->cema_stability_false_bulk[internal->vidx(lit)].value() - internal->cema_stability_true_bulk[internal->vidx(lit)].value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);

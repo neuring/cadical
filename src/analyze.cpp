@@ -611,8 +611,6 @@ void Internal::analyze () {
 
   assert (conflict);
 
-  this->sample_trail();
-
   // First update moving averages of trail height at conflict.
   //
   UPDATE_AVERAGE (averages.current.trail.fast, trail.size ());
