@@ -611,6 +611,8 @@ void Internal::analyze () {
 
   assert (conflict);
 
+  this->sample_trail();
+
   // First update moving averages of trail height at conflict.
   //
   UPDATE_AVERAGE (averages.current.trail.fast, trail.size ());
@@ -729,7 +731,6 @@ void Internal::analyze () {
   stats.learned.literals += size;
   stats.learned.clauses++;
   assert (glue < size);
-  this->sample_trail();
 
   // This is some code to print the stability histogram
   //if (this->stats.conflicts % 1000 == 0) {
