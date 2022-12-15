@@ -2,6 +2,7 @@
 #define _cema_hpp_INCLUDED
 
 #include<cmath>
+#include<iostream>
 
 namespace CaDiCaL {
 
@@ -42,10 +43,12 @@ struct CEMA {
   void  update(double next_value) {
     double new_exponential_part = this->alpha * next_value + (1 - this->alpha) * this->exponential_part;
 
-    double new_cumulative_part = (1 - this->alpha) * (this->cumulative_part + (this->cumulative_factor * next_value - this->cumulative_part) / (this->time + 2));
+    if (this->cumulative_part) {
+      double new_cumulative_part = (1 - this->alpha) * (this->cumulative_part + (this->cumulative_factor * next_value - this->cumulative_part) / (this->time + 2));
+      this->cumulative_part = new_cumulative_part;
+    }
 
     this->exponential_part = new_exponential_part;
-    this->cumulative_part = new_cumulative_part;
 
     this->time += 1;
     this->cumulative_factor *= (1 - this->alpha);
@@ -56,9 +59,11 @@ struct CEMA {
 
     double new_exponential_part = (1 - exp_repetition) * next_values + exp_repetition * this->exponential_part;
 
-    double new_cumulative_part = exp_repetition * (this->cumulative_part + repetition * (this->cumulative_factor * next_values - this->cumulative_part) / (this->time + repetition + 1));
+    if (this->cumulative_part) {
+      double new_cumulative_part = exp_repetition * (this->cumulative_part + repetition * (this->cumulative_factor * next_values - this->cumulative_part) / (this->time + repetition + 1));
+      this->cumulative_part = new_cumulative_part;
+    }
 
-    this->cumulative_part = new_cumulative_part;
     this->exponential_part = new_exponential_part;
 
     this->time += repetition;
