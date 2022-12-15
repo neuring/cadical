@@ -21,13 +21,19 @@ namespace CaDiCaL {
 
     void Internal::update_stability(int var) {
         var = this->vidx(var);
-        int conflicts_since_last_update = this->stats.conflicts - this->stability_last_update[var];
+        int conflicts_since_last_update = this->stats.conflicts - this->stability[var].last_updated;
         if (conflicts_since_last_update == 0) return;
+<<<<<<< HEAD
         this->stability_last_update[var] = this->stats.conflicts;
+=======
+
+        this->stability[var].last_updated = this->stats.conflicts;
+>>>>>>> 8ae1a30 (maintain stability information in array of structs)
 
         var = this->vidx(var);
         switch (this->vals[var]) {
             case 0: 
+<<<<<<< HEAD
                 this->cema_stability_true_bulk[var] .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
                 this->cema_stability_false_bulk[var].bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
                 break;
@@ -38,6 +44,18 @@ namespace CaDiCaL {
             case -1: 
                 this->cema_stability_true_bulk[var] .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
                 this->cema_stability_false_bulk[var].bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
+=======
+                this->stability[var].true_stability.bulk_update(0, conflicts_since_last_update);
+                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update);
+                break;
+            case 1: 
+                this->stability[var].true_stability.bulk_update(1, conflicts_since_last_update);
+                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update);
+                break;
+            case -1: 
+                this->stability[var].true_stability.bulk_update(0, conflicts_since_last_update);
+                this->stability[var].false_stability.bulk_update(1, conflicts_since_last_update);
+>>>>>>> 8ae1a30 (maintain stability information in array of structs)
                 break;
             default: assert(false); // unreacheable
         }
@@ -45,14 +63,40 @@ namespace CaDiCaL {
 
     void Internal::update_stability_all_variables() {
         for (int var : this->vars) {
+<<<<<<< HEAD
             this->update_stability(var);
+=======
+            int conflicts_since_last_update = this->stats.conflicts - this->stability[var].last_updated;
+            this->stability[var].last_updated = this->stats.conflicts;
+            int current_assignment = this->vals[var];
+
+            switch (current_assignment) {
+                case 0: 
+                    this->stability[var].true_stability.bulk_update(0, conflicts_since_last_update);
+                    this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update);
+                    break;
+                case 1: 
+                    this->stability[var].true_stability.bulk_update(1, conflicts_since_last_update);
+                    this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update);
+                    break;
+                case -1: 
+                    this->stability[var].true_stability.bulk_update(0, conflicts_since_last_update);
+                    this->stability[var].false_stability.bulk_update(1, conflicts_since_last_update);
+                    break;
+                default: assert(false); // unreacheable
+            }
+
+            if (var == 1) {
+                //std::cout << "epoch synchronizing 1 with " << current_assignment << " (" << conflicts_since_last_update << "), value=" << this->cema_stability_true_bulk[var].value() << std::endl;
+            }
+>>>>>>> 8ae1a30 (maintain stability information in array of structs)
         }
     }
 
     double probability_lit_is_false(Internal *internal, const int lit) {
         // The probability that the literal is false. Note how if lit is positive we sample from stability_false and reversed.
-        auto lit_prob = lit > 0 ? internal->cema_stability_false_bulk[internal->vidx(lit)].value()
-                                : internal->cema_stability_true_bulk [internal->vidx(lit)].value();
+        auto lit_prob = lit > 0 ? internal->stability[internal->vidx(lit)].false_stability.value()
+                                : internal->stability[internal->vidx(lit)].true_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1); // Apparently the cadicals EMA implementation doesn't guarante that its value is between the lowest and highest value provided.
@@ -60,8 +104,8 @@ namespace CaDiCaL {
     }
 
     double probability_lit_is_true(Internal *internal, const int lit) {
-        auto lit_prob = lit > 0 ? internal->cema_stability_true_bulk [internal->vidx(lit)].value()
-                                : internal->cema_stability_false_bulk[internal->vidx(lit)].value();
+        auto lit_prob = lit > 0 ? internal->stability[internal->vidx(lit)].true_stability.value()
+                                : internal->stability[internal->vidx(lit)].false_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
@@ -69,7 +113,7 @@ namespace CaDiCaL {
     }
 
     double probability_lit_is_unassigned(Internal *internal, const int lit) {
-        auto lit_prob = 1.0 - internal->cema_stability_false_bulk[internal->vidx(lit)].value() - internal->cema_stability_true_bulk[internal->vidx(lit)].value();
+        auto lit_prob = 1.0 - internal->stability[internal->vidx(lit)].false_stability.value() - internal->stability[internal->vidx(lit)].true_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);

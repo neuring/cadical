@@ -88,6 +88,7 @@ extern "C" {
 #include "stats.hpp"
 #include "terminal.hpp"
 #include "tracer.hpp"
+#include "trail_sample.hpp"
 #include "util.hpp"
 #include "var.hpp"
 #include "version.hpp"
@@ -161,10 +162,7 @@ struct Internal {
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
   signed char * vals;           // assignment [-max_var,max_var]
-  vector<CEMA> cema_stability_true_bulk;   // the local ratio that a variable is true  (vs. false or unassigned)
-  vector<CEMA> cema_stability_false_bulk;  // the local ratio that a variable is false (vs. true  or unassigned)
-  vector<int64_t> stability_last_update; // stores the last conflict when this variable stability value was last updated.
-  double stability_ema_alpha;
+  vector<CEMACollector> stability; // 
   vector<signed char> marks;    // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'
