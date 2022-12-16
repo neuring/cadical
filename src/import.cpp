@@ -205,20 +205,16 @@ void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithG
   });
   size_t imported_literal_limit = import_percent * total_nb_literals;
 
-  std::cout << "####################### IMPORTING CLAUSES #########################" << std::endl;
-
   // Import the best clauses until literal limit is reached.
   for (auto cls_idx : evaluated_clauses) {
     if (already_imported >= imported_literal_limit) {
-      std::cout << "N" << clause_candidates[cls_idx.index].clause.size() << ": " << cls_idx.heuristic << std::endl;
-    } else {
-
-      auto& candidate = clause_candidates[cls_idx.index];
-
-      add_new_imported_clause(internal, candidate);
-      already_imported += candidate.clause.size() + 1;
-      std::cout << "I" << clause_candidates[cls_idx.index].clause.size() << ": " << cls_idx.heuristic << std::endl;
+      break;
     }
+
+    auto& candidate = clause_candidates[cls_idx.index];
+
+    add_new_imported_clause(internal, candidate);
+    already_imported += candidate.clause.size() + 1;
   }
 
   // Check if SAT or UNSAT was found
