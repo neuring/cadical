@@ -155,50 +155,21 @@ struct ClauseWithGlue {
 };
 
 struct IndexWithHeuristic {
-  size_t clause_idx;
+  size_t index;
   double heuristic;
 };
 
-void add_new_imported_clause(Internal *internal, ClauseWithGlue& imported_clause, bool bc_selection_heuristic) {
+void add_new_imported_clause(Internal *internal, ClauseWithGlue& imported_clause) {
     internal->clause = imported_clause.clause;
     Clause * cls_res = internal->new_clause (true, imported_clause.glue);
     cls_res->imported = true;
-    cls_res->import_bc_heuristic = bc_selection_heuristic;
 
     internal->stats.import.imported_clauses += 1;
-    internal->stats.import.imported_clauses_bc_selection_heuristic += bc_selection_heuristic ? 1 : 0;
 
     internal->clause.clear();
     if (internal->proof) internal->proof->add_derived_clause (cls_res);
     assert (internal->watching ());
     internal->watch_clause (cls_res);
-}
-
-// Given the clause candidates, this function creates a new vector where each elements has an index to its corresponding clause in the candidates vector.
-// The returned vector is sorted using the given heuristic.
-std::vector<IndexWithHeuristic> create_index_vector(Internal *internal, std::unique_ptr<Heuristic>& heuristic, std::vector<ClauseWithGlue>& clause_candidates) {
-
-  std::vector<IndexWithHeuristic> ordered_indices(clause_candidates.size());
-  for (size_t i = 0; i < ordered_indices.size(); i++) {
-    ordered_indices[i].clause_idx = i;
-    ordered_indices[i].heuristic = heuristic->eval_clause(internal, clause_candidates[i].clause);
-  }
-
-  if (internal->opts.importfallbackheuristic != HeuristicCode::SIZE) { // Since mallob sorts the imported clauses by size by default there is no need to sort them if the size heuristic is selected.
-    std::sort(ordered_indices.begin(), ordered_indices.end(), [&heuristic, &clause_candidates](const auto& left, const auto& right) {
-      if (left.heuristic < right.heuristic) {
-        return !heuristic->higher_is_better();
-      } else if (left.heuristic > right.heuristic) {
-        return heuristic->higher_is_better();
-      } else {
-        double left_size = clause_candidates[left.clause_idx].clause.size();
-        double right_size = clause_candidates[right.clause_idx].clause.size();
-        return left_size < right_size;
-      };
-    });
-  }
-
-  return ordered_indices;
 }
 
 std::string clause_to_string(std::vector<int>& clause) {
@@ -210,78 +181,43 @@ std::string clause_to_string(std::vector<int>& clause) {
   return result.str();
 }
 
-// Determine how many clauses can be imported.
-// This is based on how many clauses the default size heuristic would have imported, if the clause buffer were reduced by the importpercent option.
-size_t determine_clause_count(Internal *internal, std::vector<ClauseWithGlue>& clause_candidates) {
-  const size_t total_literals = std::accumulate(clause_candidates.begin(), clause_candidates.end(), 0, [](const int& acc, const ClauseWithGlue& elem){ 
-    return elem.clause.size() + 1 + acc;
+void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithGlue> clause_candidates, size_t already_imported) {
+  int heuristic_code = internal->opts.importheuristic;
+  std::unique_ptr<Heuristic> heuristic = get_heuristic_from_code(heuristic_code);
+
+  // Evaluate each imported clause candidate with the specified heuristic.
+  std::vector<IndexWithHeuristic> evaluated_clauses;
+  for (size_t idx = 0; idx < clause_candidates.size(); idx += 1) {
+    double clause_heuristic = heuristic->eval_clause(internal, clause_candidates[idx].clause);
+    evaluated_clauses.push_back({ idx, clause_heuristic });
+  }
+
+  // Order them from best to worst.
+  std::sort(evaluated_clauses.begin(), evaluated_clauses.end(), [&heuristic](const auto& a, const auto& b) {
+    return heuristic->higher_is_better() ? a.heuristic >= b.heuristic : a.heuristic < b.heuristic;
   });
 
-  const size_t import_literal_limit = (total_literals * internal->opts.importpercent) / 100;
+  // Determine how many literals can be imported.
+  double import_percent = internal->opts.importpercent / 100.0;
+  // We start with already_imported because unit clauses don't appear in the clause_candidates vector but should be considered in the literal limit.
+  int total_nb_literals = std::accumulate(clause_candidates.begin(), clause_candidates.end(), already_imported, [](int sum, const auto& clause) {
+    return sum + clause.clause.size() + 1; // Plus one zero terminator
+  });
+  size_t imported_literal_limit = import_percent * total_nb_literals;
 
-  size_t running_literal_total = 0;
-  for (size_t i = 0; i < clause_candidates.size(); i++) {
-    running_literal_total += clause_candidates[i].clause.size() + 1;
+  std::cout << "####################### IMPORTING CLAUSES #########################" << std::endl;
 
-    if (running_literal_total >= import_literal_limit) {
-      return i;
-    }
-  }
+  // Import the best clauses until literal limit is reached.
+  for (auto cls_idx : evaluated_clauses) {
+    if (already_imported >= imported_literal_limit) {
+      std::cout << "N" << clause_candidates[cls_idx.index].clause.size() << ": " << cls_idx.heuristic << std::endl;
+    } else {
 
-  assert(false); // unreacheable
-  return -1;
-}
+      auto& candidate = clause_candidates[cls_idx.index];
 
-void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithGlue> clause_candidates, size_t already_imported) {
-  double importselectionthreshold = internal->opts.importselectionthreshold / 100.0;
-  int imported_clause_limit = determine_clause_count(internal, clause_candidates);
-  int imported_clauses = 0;
-
-  std::vector<bool> selected_clauses(clause_candidates.size());
-
-  // Only select if a selection heuristic was actually selected.
-  if (internal->opts.importselectionheuristic != HeuristicCode::NO_HEURISTIC) {
-    auto selection_heuristic = get_heuristic_from_code(internal->opts.importselectionheuristic);
-    std::vector<IndexWithHeuristic> selection_heuristic_order = create_index_vector(internal, selection_heuristic, clause_candidates);
-
-    for (auto selected_clause : selection_heuristic_order) {
-      if (imported_clauses >= imported_clause_limit) {
-        break;
-      }
-
-      if (selection_heuristic->is_better(selected_clause.heuristic, importselectionthreshold)) {
-        auto& selected = clause_candidates[selected_clause.clause_idx];
-        add_new_imported_clause(internal, selected, true);
-
-        already_imported += selected.clause.size() + 1;
-        selected_clauses[selected_clause.clause_idx] = true;
-        imported_clauses += 1;
-      }
-    }
-  }
-
-  int imported_bc_selection_heuristic = imported_clauses;
-
-  // Add the remaining clauses using the fallback heuristic until we reach the limit importpercent.
-  auto fallback_heuristic = get_heuristic_from_code(internal->opts.importfallbackheuristic);
-  std::vector<IndexWithHeuristic> fallback_heuristic_order = create_index_vector(internal, fallback_heuristic, clause_candidates);
-
-  //for (auto cls : fallback_heuristic_order) {
-  //  std::cout << "Fallback clause : " << clause_to_string(clause_candidates[cls.clause_idx].clause) << std::endl;
-  //}
-
-  for (auto selected_clause : fallback_heuristic_order) {
-    if (imported_clauses >= imported_clause_limit) {
-      break;
-    }
-
-    if (selected_clauses[selected_clause.clause_idx] == false) { // Clause hasn't been selected by the selection heuristic.
-      auto& selected = clause_candidates[selected_clause.clause_idx];
-      add_new_imported_clause(internal, selected, false);
-
-      already_imported += selected.clause.size() + 1;
-      selected_clauses[selected_clause.clause_idx] = true;
-      imported_clauses += 1;
+      add_new_imported_clause(internal, candidate);
+      already_imported += candidate.clause.size() + 1;
+      std::cout << "I" << clause_candidates[cls_idx.index].clause.size() << ": " << cls_idx.heuristic << std::endl;
     }
   }
 
@@ -294,8 +230,6 @@ void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithG
     res = 10;
     return;
   }
-
-  std::cout << "imported " << imported_clauses << " (selected " << imported_bc_selection_heuristic << ")" << " of " << clause_candidates.size() << "(" << already_imported << ")" << std::endl;
 }
 
 void Internal::import_redundant_clauses (int& res) {
