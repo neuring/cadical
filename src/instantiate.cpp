@@ -52,7 +52,7 @@ Internal::collect_instantiation_candidates (Instantiator & instantiator) {
 inline void Internal::inst_assign (int lit) {
   LOG ("instantiate assign %d", lit);
   assert (!val (lit));
-  this->update_stability(vidx(lit), sign(lit));
+  this->update_stability(vidx(lit));
   vals[lit] = 1;
   vals[-lit] = -1;
   trail.push_back (lit);

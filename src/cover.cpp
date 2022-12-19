@@ -85,7 +85,7 @@ Internal::asymmetric_literal_addition (int lit, Coveror & coveror)
   assert (level == 1);
   LOG ("initial asymmetric literal addition %d", lit);
   assert (!vals[lit]), assert (!vals[-lit]);
-  this->update_stability(vidx(lit), -sign(lit));
+  this->update_stability(vidx(lit));
   vals[lit] = -1, vals[-lit] = 1;
   coveror.added.push_back (lit);
   coveror.alas++;
@@ -380,7 +380,7 @@ bool Internal::cover_clause (Clause * c, Coveror & coveror) {
 
   assert (level == 1);
   for (const auto & lit : coveror.added) {
-    this->update_stability(vidx(0), 0);
+    this->update_stability(vidx(0));
     vals[lit] = vals[-lit] = 0;
   }
   level = 0;
