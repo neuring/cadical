@@ -10,7 +10,7 @@ namespace CaDiCaL {
 inline void Internal::unassign (int lit) {
   assert (val (lit) > 0);
   const int idx = vidx (lit);
-  this->update_stability(idx, 0);
+  this->update_stability(idx);
   vals[idx] = 0;
   vals[-idx] = 0;
   LOG ("unassign %d @ %d", lit, var (idx).level);
