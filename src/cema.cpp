@@ -7,7 +7,7 @@ double CEMA::value() {
   return this->exponential_part + this->cumulative_part;
 }
 
-void CEMA::update(double next_value, double alpha) {
+void CEMA::update(double next_value) {
   double new_exponential_part = alpha * (next_value - this->exponential_part) + this->exponential_part;
 
   if (this->cumulative_part) {
@@ -20,7 +20,7 @@ void CEMA::update(double next_value, double alpha) {
   this->cumulative_factor *= (1 - alpha);
 }
 
-  void CEMA::bulk_update(double next_values, int repetition, double alpha) {
+  void CEMA::bulk_update(double next_values, int repetition) {
     double exp_repetition = std::pow(1 - alpha, repetition);
 
     double new_exponential_part = next_values + (this->exponential_part - next_values) * exp_repetition + 1;

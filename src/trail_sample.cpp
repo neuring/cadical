@@ -29,16 +29,16 @@ namespace CaDiCaL {
         var = this->vidx(var);
         switch (this->vals[var]) {
             case 0: 
-                this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
+                this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update);
+                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update);
                 break;
             case 1: 
-                this->stability[var].true_stability .bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
+                this->stability[var].true_stability .bulk_update(1, conflicts_since_last_update);
+                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update);
                 break;
             case -1: 
-                this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability[var].false_stability.bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
+                this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update);
+                this->stability[var].false_stability.bulk_update(1, conflicts_since_last_update);
                 break;
             default: assert(false); // unreacheable
         }
