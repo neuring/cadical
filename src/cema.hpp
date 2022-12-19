@@ -41,7 +41,7 @@ struct CEMA {
   }
 
   void  update(double next_value) {
-    double new_exponential_part = this->alpha * next_value + (1 - this->alpha) * this->exponential_part;
+    double new_exponential_part = this->alpha * (next_value - this->exponential_part) + this->exponential_part;
 
     if (this->cumulative_part) {
       double new_cumulative_part = (1 - this->alpha) * (this->cumulative_part + (this->cumulative_factor * next_value - this->cumulative_part) / (this->time + 2));
@@ -57,7 +57,7 @@ struct CEMA {
   void bulk_update(double next_values, int repetition) {
     double exp_repetition = std::pow(1 - this->alpha, repetition);
 
-    double new_exponential_part = (1 - exp_repetition) * next_values + exp_repetition * this->exponential_part;
+    double new_exponential_part = next_values + (this->exponential_part - next_values) * exp_repetition + 1;
 
     if (this->cumulative_part) {
       double new_cumulative_part = exp_repetition * (this->cumulative_part + repetition * (this->cumulative_factor * next_values - this->cumulative_part) / (this->time + repetition + 1));
