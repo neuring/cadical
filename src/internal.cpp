@@ -205,21 +205,24 @@ int Internal::cdcl_loop_with_inprocessing () {
   else        { START (unstable); report ('{'); }
 
   while (!res) {
-    if (this->level == 0) {
-      this->update_stability_values_same_epoch();
-      for (int var : this->vars) {
-        //if (var != 1) continue;
-        assert(std::abs(this->cema_stability_true[var].value() - this->cema_stability_true_bulk[var].value()) < 1e-7);
-        assert(std::abs(this->cema_stability_false[var].value() - this->cema_stability_false_bulk[var].value()) < 1e-7);
-        //std::cout 
-        //  << var 
-        //  << ": single=" 
-        //  << this->cema_stability_true[var].value() 
-        //  << ", bulk=" 
-        //  << this->cema_stability_true_bulk[var].value() 
-        //  << std::endl;
-      }
-    }
+    //if (this->level == 0) {
+    //  this->update_stability_values_same_epoch();
+    //  for (int var : this->vars) {
+    //    assert(std::abs(this->cema_stability_true[var].value() - this->cema_stability_true_bulk[var].value()) < 1e-7);
+    //    assert(std::abs(this->cema_stability_false[var].value() - this->cema_stability_false_bulk[var].value()) < 1e-7);
+    //    std::cout 
+    //      << var 
+    //      << " "
+    //      << this->cema_stability_true[var].value() 
+    //      << ":"
+    //      << this->cema_stability_false[var].value() 
+    //      << ","
+    //      << this->cema_stability_true_bulk[var].value() 
+    //      << ":"
+    //      << this->cema_stability_false_bulk[var].value() 
+    //      << std::endl;
+    //  }
+    //}
 
          if (unsat) res = 20;
     else if (unsat_constraint) res = 20;
