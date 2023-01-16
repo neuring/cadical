@@ -730,32 +730,6 @@ void Internal::analyze () {
   stats.learned.clauses++;
   assert (glue < size);
 
-  // This is some code to print the stability histogram
-  //if (this->stats.conflicts % 1000 == 0) {
-
-  //  auto gen_hist = [this](const std::vector<EMA>& data){
-  //    constexpr int buckets = 10;
-
-  //    int hist[buckets] = {0};
-
-  //    for (const auto& ema : data) {
-  //      int bucket_idx = std::floor(ema.value * buckets);
-  //      if (buckets <= bucket_idx) bucket_idx = buckets - 1;
-  //      hist[bucket_idx] += 1;
-  //    }
-
-  //    std::string result;
-  //    for (int x : hist) {
-  //      result.append(" ");
-  //      result.append(std::to_string(x));
-  //    }
-  //    return std::move(result);
-  //  };
-
-  //  std::cout << "var stability true  stats:" << gen_hist(this->stability_true) << std::endl;
-  //  std::cout << "var stability false stats:" << gen_hist(this->stability_false) << std::endl;
-  //}
-
   // Minimize the 1st UIP clause as pioneered by Niklas Soerensson in
   // MiniSAT and described in our joint SAT'09 paper.
   //

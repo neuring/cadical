@@ -108,7 +108,6 @@ Clause * Internal::new_clause (bool red, int glue) {
   c->vivified = false;
   c->vivify = false;
   c->imported = false;
-  c->import_bc_heuristic = false;
   c->used = 0;
 
   c->glue = glue;

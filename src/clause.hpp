@@ -45,7 +45,6 @@ struct Clause {
   bool vivified:1;    // clause already vivified
   bool vivify:1;      // clause scheduled to be vivified
   bool imported:1;    // clause imported from external solver.
-  bool import_bc_heuristic:1; // Why was this clause imported, because of the stability heuristic or by default (i.e. size).
 
   // The glucose level ('LBD' or short 'glue') is a heuristic value for the
   // expected usefulness of a learned clause, where smaller glue is consider

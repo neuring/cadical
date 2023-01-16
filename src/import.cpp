@@ -107,13 +107,13 @@ class UnstableLiteralsHeuristic : public Heuristic {
     }
 };
 
-class UnstableLiteralsModifiedHeuristic : public Heuristic {
+class GeneralizedUnstableLiteralsHeuristic : public Heuristic {
   public:
-    UnstableLiteralsModifiedHeuristic() = default;
+    GeneralizedUnstableLiteralsHeuristic() = default;
 
     virtual bool higher_is_better() { return false;};
     virtual double eval_clause(Internal* internal, std::vector<int>& clause) {
-        return internal->clause_conflict_heuristic_unstable_lits_minus_stable_lits(clause);
+        return internal->clause_conflict_heuristic_generalized_unstable_lits(clause);
     }
 };
 
@@ -136,7 +136,7 @@ std::unique_ptr<Heuristic> get_heuristic_from_code(int code) {
     case 4: return std::make_unique<MinNormHeuristic>();
     case 5: return std::make_unique<SecondMinHeuristic>();
     case 6: return std::make_unique<UnstableLiteralsHeuristic>();
-    case 7: return std::make_unique<UnstableLiteralsModifiedHeuristic>();
+    case 7: return std::make_unique<GeneralizedUnstableLiteralsHeuristic>();
     case 8: return std::make_unique<LiteralScoreSum>();
     default: 
       assert(false); 

@@ -1061,7 +1061,7 @@ struct Internal {
     double clause_conflict_heuristic_min(const std::vector<int>& clause);
     double clause_conflict_heuristic_second_min(const std::vector<int>& clause);
     int clause_conflict_heuristic_unstable_lits(const std::vector<int>& clause);
-    double clause_conflict_heuristic_unstable_lits_minus_stable_lits(const std::vector<int>& clause);
+    double clause_conflict_heuristic_generalized_unstable_lits(const std::vector<int>& clause);
     double clause_conflict_heuristic_literal_score_sum(const std::vector<int>& clause);
 
     bool is_lit_stable_false(const int lit);

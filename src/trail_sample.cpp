@@ -9,16 +9,6 @@ namespace CaDiCaL {
         else return val;
     }
 
-    static ofstream* get_stability_output_stream() {
-        static ofstream *output_file = nullptr;
-        if (output_file == nullptr) {
-            output_file = new ofstream();
-            output_file->open("fuzzy_stability.data");
-            *output_file << "fuzzy, sum, size" << std::endl;
-        }
-        return output_file;
-    }
-
     void Internal::update_stability(int var) {
         var = this->vidx(var);
         int conflicts_since_last_update = this->stats.conflicts - this->stability[var].last_updated;
@@ -56,7 +46,7 @@ namespace CaDiCaL {
                                 : internal->stability[internal->vidx(lit)].true_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
-        lit_prob = clamp(lit_prob, 0, 1); // Apparently the cadicals EMA implementation doesn't guarante that its value is between the lowest and highest value provided.
+        lit_prob = clamp(lit_prob, 0, 1);
         return lit_prob;
     }
 
@@ -72,10 +62,6 @@ namespace CaDiCaL {
     double probability_lit_is_unassigned(Internal *internal, const int lit) {
         auto lit_prob = 1.0 - internal->stability[internal->vidx(lit)].false_stability.value() - internal->stability[internal->vidx(lit)].true_stability.value();
 
-        if (!(-0.001 <= lit_prob && lit_prob <= 1.001)) {
-            std::cout << "Lit prob is " << lit_prob << std::endl;
-            lit_prob = 0;
-        }
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
         return lit_prob;
@@ -97,7 +83,6 @@ namespace CaDiCaL {
         for (auto lit : clause) {
             auto lit_prob = probability_lit_is_false(this, lit);
             result = std::max(result + lit_prob - 1, 0.0);
-            //std::cout << "litprob = " << lit_prob << ", res = " << result << std::endl;
         }
 
         return result;
@@ -163,7 +148,7 @@ namespace CaDiCaL {
         return clause.size() - stable_lits;
     }
 
-    double Internal::clause_conflict_heuristic_unstable_lits_minus_stable_lits(const std::vector<int>& clause) {
+    double Internal::clause_conflict_heuristic_generalized_unstable_lits(const std::vector<int>& clause) {
         double true_penalty = this->opts.trueliteralpenalty / 100.0;
         double result = 0.0;
 
