@@ -72,6 +72,10 @@ namespace CaDiCaL {
     double probability_lit_is_unassigned(Internal *internal, const int lit) {
         auto lit_prob = 1.0 - internal->stability[internal->vidx(lit)].false_stability.value() - internal->stability[internal->vidx(lit)].true_stability.value();
 
+        if (!(-0.001 <= lit_prob && lit_prob <= 1.001)) {
+            std::cout << "Lit prob is " << lit_prob << std::endl;
+            lit_prob = 0;
+        }
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
         return lit_prob;
