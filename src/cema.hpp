@@ -13,7 +13,7 @@ struct CEMA {
   double cumulative_part;
   double exponential_part;
   double time;
-  double cumulative_factor; // always (1 - alpha)^(time + 1)
+  double cumulative_factor; // always (1 - alpha)^time
 
   CEMA()
   :
@@ -25,9 +25,9 @@ struct CEMA {
 
   double value();
 
-  void  update(double next_value, double alpha);
-
   void bulk_update(double next_values, int repetition, double alpha);
+
+  void bulk_update(double next_values, int repetition, double alpha, double exp_repetition);
 };
 
 }

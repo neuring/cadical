@@ -50,7 +50,8 @@ Internal::Internal ()
   lits (this->max_var)
 {
   control.push_back (Level (0, 0));
-  this->stability_ema_alpha = 2./(this->opts.varemawindow + 1);
+  stability_collector.stability_ema_alpha = 2./(this->opts.varemawindow + 1);
+  stability_ema_alpha = 2./(this->opts.varemawindow + 1);
 }
 
 Internal::~Internal () {
@@ -126,6 +127,10 @@ void Internal::enlarge (int new_max_var) {
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
   enlarge_init (stability, 2*new_vsize, CEMACollector());
+  enlarge_init (stability_collector.stability, 2*new_vsize, CEMACollector());
+  enlarge_init (ema_true, 2*new_vsize, EMA(this->stability_ema_alpha));
+  enlarge_init (ema_false, 2*new_vsize, EMA(this->stability_ema_alpha));
+  enlarge_init (stability_collector.stability, 2*new_vsize, CEMACollector());
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);

@@ -354,6 +354,9 @@ void Internal::compact () {
   mapper.map_vector (links);
   mapper.map_vector (vtab);
   mapper.map_vector (stability);
+  mapper.map_vector (stability_collector.stability);
+  mapper.map_vector (ema_true);
+  mapper.map_vector (ema_false);
   if (!ntab.empty ()) mapper.map2_vector (ntab);
   if (!wtab.empty ()) mapper.map2_vector (wtab);
   if (!otab.empty ()) mapper.map2_vector (otab);

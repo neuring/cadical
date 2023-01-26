@@ -162,8 +162,11 @@ struct Internal {
   int level;                    // decision level ('control.size () - 1')
   Phases phases;                // saved, target and best phases
   signed char * vals;           // assignment [-max_var,max_var]
+  vector<EMA> ema_true;
+  vector<EMA> ema_false;
   vector<CEMACollector> stability; // 
   double stability_ema_alpha;  
+  StabilityCollector stability_collector;
   vector<signed char> marks;    // signed marks [1,max_var]
   vector<unsigned> frozentab;   // frozen counters [1,max_var]
   vector<int> i2e;              // maps internal 'idx' to external 'lit'

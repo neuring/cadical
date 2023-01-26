@@ -1,6 +1,7 @@
 #include "internal.hpp"
 #include<iostream>
 #include<fstream>
+#include "ema.hpp"
 
 namespace CaDiCaL {
     static double clamp(double val, double low, double high) {
@@ -21,17 +22,48 @@ namespace CaDiCaL {
             case 0: 
                 this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
                 this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
+                this->stability_collector.update_var(var, 0, 0, conflicts_since_last_update);
+                for (int i = 0; i < conflicts_since_last_update; i += 1) {
+                    UPDATE_AVERAGE(this->ema_true[var], 0);
+                    UPDATE_AVERAGE(this->ema_false[var], 0);
+                }
                 break;
             case 1: 
                 this->stability[var].true_stability .bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
                 this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
+                this->stability_collector.update_var(var, 1, 0, conflicts_since_last_update);
+                for (int i = 0; i < conflicts_since_last_update; i += 1) {
+                    UPDATE_AVERAGE(this->ema_true[var], 1);
+                    UPDATE_AVERAGE(this->ema_false[var], 0);
+                }
                 break;
             case -1: 
                 this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
                 this->stability[var].false_stability.bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
+                this->stability_collector.update_var(var, 0, 1, conflicts_since_last_update);
+                for (int i = 0; i < conflicts_since_last_update; i += 1) {
+                    UPDATE_AVERAGE(this->ema_true[var], 0);
+                    UPDATE_AVERAGE(this->ema_false[var], 1);
+                }
                 break;
             default: assert(false); // unreacheable
         }
+
+        // TODO: remove compare old and new stabilty values for equality.
+        double true_old = this->stability[var].true_stability.value();
+        double true_new = this->stability_collector.stability[var].true_stability.value();
+        double false_old = this->stability[var].false_stability.value();
+        double false_new = this->stability_collector.stability[var].false_stability.value();
+        double true_ema = this->ema_true[var].value;
+        double false_ema = this->ema_false[var].value;
+
+        bool err = (std::abs(true_ema - true_new) >= 1e-9);
+        std::cout << var << " (" << (int)this->vals[var] << " : " << conflicts_since_last_update << ")" << "true: " << true_ema << " != " << true_new << " " << (err ? "ERROR" : "") << std::endl;
+        //std::cout << "exp part: " << this->stability[var].true_stability.exponential_part << ", cum part: " << this->stability[var].true_stability.cumulative_part << std::endl;
+
+        //if (std::abs(false_old - false_new) >= 1e-9) {
+        //    std::cout << var << "false: " << false_old << " != " << false_new << std::endl;
+        //}
     }
 
     void Internal::update_stability_all_variables() {
