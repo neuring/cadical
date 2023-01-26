@@ -23,7 +23,11 @@ struct StabilityCollector {
     : stability(), stability_ema_alpha(-1), cached_exp_repetition(1.0), cached_repetition(0)
   {}
 
-  void update_var(int variable, int true_assignment, int false_assignment, int repetition) {
+  void update_var(int variable, int true_assignment, int false_assignment, int current_epoch) {
+    int repetition = current_epoch - this->stability[variable].last_updated;
+    assert(repetition >= 0);
+    this->stability[variable].last_updated = current_epoch;
+
     if (repetition > this->cached_repetition) {
       this->cached_exp_repetition *= std::pow(1 - this->stability_ema_alpha, repetition - this->cached_repetition);
       this->cached_repetition = repetition;

@@ -12,58 +12,22 @@ namespace CaDiCaL {
 
     void Internal::update_stability(int var) {
         var = this->vidx(var);
-        int conflicts_since_last_update = this->stats.conflicts - this->stability[var].last_updated;
+        int conflicts_since_last_update = this->stats.conflicts - this->stability_collector.stability[var].last_updated;
         if (conflicts_since_last_update == 0) return;
-
-        this->stability[var].last_updated = this->stats.conflicts;
 
         var = this->vidx(var);
         switch (this->vals[var]) {
             case 0: 
-                this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability_collector.update_var(var, 0, 0, conflicts_since_last_update);
-                for (int i = 0; i < conflicts_since_last_update; i += 1) {
-                    UPDATE_AVERAGE(this->ema_true[var], 0);
-                    UPDATE_AVERAGE(this->ema_false[var], 0);
-                }
+                this->stability_collector.update_var(var, 0, 0, this->stats.conflicts);
                 break;
             case 1: 
-                this->stability[var].true_stability .bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability[var].false_stability.bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability_collector.update_var(var, 1, 0, conflicts_since_last_update);
-                for (int i = 0; i < conflicts_since_last_update; i += 1) {
-                    UPDATE_AVERAGE(this->ema_true[var], 1);
-                    UPDATE_AVERAGE(this->ema_false[var], 0);
-                }
+                this->stability_collector.update_var(var, 1, 0, this->stats.conflicts);
                 break;
             case -1: 
-                this->stability[var].true_stability .bulk_update(0, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability[var].false_stability.bulk_update(1, conflicts_since_last_update, this->stability_ema_alpha);
-                this->stability_collector.update_var(var, 0, 1, conflicts_since_last_update);
-                for (int i = 0; i < conflicts_since_last_update; i += 1) {
-                    UPDATE_AVERAGE(this->ema_true[var], 0);
-                    UPDATE_AVERAGE(this->ema_false[var], 1);
-                }
+                this->stability_collector.update_var(var, 0, 1, this->stats.conflicts);
                 break;
             default: assert(false); // unreacheable
         }
-
-        // TODO: remove compare old and new stabilty values for equality.
-        double true_old = this->stability[var].true_stability.value();
-        double true_new = this->stability_collector.stability[var].true_stability.value();
-        double false_old = this->stability[var].false_stability.value();
-        double false_new = this->stability_collector.stability[var].false_stability.value();
-        double true_ema = this->ema_true[var].value;
-        double false_ema = this->ema_false[var].value;
-
-        bool err = (std::abs(true_ema - true_new) >= 1e-9);
-        std::cout << var << " (" << (int)this->vals[var] << " : " << conflicts_since_last_update << ")" << "true: " << true_ema << " != " << true_new << " " << (err ? "ERROR" : "") << std::endl;
-        //std::cout << "exp part: " << this->stability[var].true_stability.exponential_part << ", cum part: " << this->stability[var].true_stability.cumulative_part << std::endl;
-
-        //if (std::abs(false_old - false_new) >= 1e-9) {
-        //    std::cout << var << "false: " << false_old << " != " << false_new << std::endl;
-        //}
     }
 
     void Internal::update_stability_all_variables() {
@@ -74,8 +38,8 @@ namespace CaDiCaL {
 
     double probability_lit_is_false(Internal *internal, const int lit) {
         // The probability that the literal is false. Note how if lit is positive we sample from stability_false and reversed.
-        auto lit_prob = lit > 0 ? internal->stability[internal->vidx(lit)].false_stability.value()
-                                : internal->stability[internal->vidx(lit)].true_stability.value();
+        auto lit_prob = lit > 0 ? internal->stability_collector.stability[internal->vidx(lit)].false_stability.value()
+                                : internal->stability_collector.stability[internal->vidx(lit)].true_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
@@ -83,8 +47,8 @@ namespace CaDiCaL {
     }
 
     double probability_lit_is_true(Internal *internal, const int lit) {
-        auto lit_prob = lit > 0 ? internal->stability[internal->vidx(lit)].true_stability.value()
-                                : internal->stability[internal->vidx(lit)].false_stability.value();
+        auto lit_prob = lit > 0 ? internal->stability_collector.stability[internal->vidx(lit)].true_stability.value()
+                                : internal->stability_collector.stability[internal->vidx(lit)].false_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
@@ -92,7 +56,8 @@ namespace CaDiCaL {
     }
 
     double probability_lit_is_unassigned(Internal *internal, const int lit) {
-        auto lit_prob = 1.0 - internal->stability[internal->vidx(lit)].false_stability.value() - internal->stability[internal->vidx(lit)].true_stability.value();
+        auto lit_prob = 1.0 - internal->stability_collector.stability[internal->vidx(lit)].false_stability.value() 
+                            - internal->stability_collector.stability[internal->vidx(lit)].true_stability.value();
 
         assert(-0.001 <= lit_prob && lit_prob <= 1.001);
         lit_prob = clamp(lit_prob, 0, 1);
