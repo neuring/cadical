@@ -124,12 +124,12 @@ namespace CaDiCaL {
     }
 
     bool Internal::is_lit_stable_false(const int lit) {
-        double threshold = ((double) this->opts.stabilitythreshold) / 100.0;
+        double threshold = ((double) this->opts.falsestabilitythreshold) / 100.0;
         return probability_lit_is_false(internal, lit) > threshold;
     }
 
     bool Internal::is_lit_stable_true(const int lit) {
-        double threshold = ((double) this->opts.stabilitythreshold) / 100.0;
+        double threshold = ((double) this->opts.truestabilitythreshold) / 100.0;
         return probability_lit_is_true(internal, lit) > threshold;
     }
 
@@ -151,7 +151,7 @@ namespace CaDiCaL {
 
         for (auto lit : clause) {
             if (this->is_lit_stable_false(lit)) {
-                
+                result += 0; // no-op for code symmetry
             } else if (this->is_lit_stable_true(lit)) {
                 result += true_penalty;
             } else {
