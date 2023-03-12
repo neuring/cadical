@@ -125,8 +125,7 @@ void Internal::enlarge (int new_max_var) {
   // Ordered in the size of allocated memory (larger block first).
   enlarge_only (wtab, 2*new_vsize);
   enlarge_only (vtab, new_vsize);
-  enlarge_init (stability_collector.stability, 2*new_vsize, CEMACollector());
-  enlarge_init (stability_collector.stability, 2*new_vsize, CEMACollector());
+  enlarge_init (stability_collector.stability, new_vsize, CEMACollector());
   enlarge_zero (parents, new_vsize);
   enlarge_only (links, new_vsize);
   enlarge_zero (btab, new_vsize);

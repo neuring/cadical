@@ -380,7 +380,7 @@ bool Internal::cover_clause (Clause * c, Coveror & coveror) {
 
   assert (level == 1);
   for (const auto & lit : coveror.added) {
-    this->update_stability(vidx(0));
+    this->update_stability(vidx(lit));
     vals[lit] = vals[-lit] = 0;
   }
   level = 0;
