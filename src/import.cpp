@@ -161,6 +161,7 @@ struct IndexWithHeuristic {
 
 void add_new_imported_clause(Internal *internal, ClauseWithGlue& imported_clause) {
     internal->clause = imported_clause.clause;
+    internal->external->check_learned_clause ();
     Clause * cls_res = internal->new_clause (true, imported_clause.glue);
     cls_res->imported = true;
 
@@ -247,6 +248,7 @@ void Internal::import_redundant_clauses (int& res) {
     assert (size > 0);
     int unitLit = size == 1 ? cls[0] : 0;
     assert (clause.empty ());
+    std::vector<int> currentClause;
 
     if (unitLit == 0) {
       // Learn non-unit clause
@@ -281,7 +283,7 @@ void Internal::import_redundant_clauses (int& res) {
           } // else: FALSE - literal can be omitted.
         } else {
           // Active, pure, or substituted: Can treat literal normally.
-          clause.push_back (ilit);
+          currentClause.push_back (ilit);
           unitLit = elit;
         }
       }
@@ -295,8 +297,7 @@ void Internal::import_redundant_clauses (int& res) {
       // Handle clause of size >= 2 being learnt
       // (unit clauses are handled below)
       if (clause.size () >= 2) {
-        clause_candidates.push_back({clause, glue});
-        external->check_learned_clause ();
+        clause_candidates.push_back({currentClause, glue});
         unitLit = 0;
       }
 
