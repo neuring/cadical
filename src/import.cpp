@@ -195,7 +195,7 @@ void import_useful_clauses(int& res, Internal *internal, std::vector<ClauseWithG
 
   // Order them from best to worst.
   std::sort(evaluated_clauses.begin(), evaluated_clauses.end(), [&heuristic](const auto& a, const auto& b) {
-    return heuristic->higher_is_better() ? a.heuristic >= b.heuristic : a.heuristic < b.heuristic;
+    return heuristic->higher_is_better() ? a.heuristic > b.heuristic : a.heuristic < b.heuristic;
   });
 
   // Determine how many literals can be imported.
@@ -235,6 +235,7 @@ void Internal::import_redundant_clauses (int& res) {
 
   // Store clauses > 2 and select the 'best' ones afterwards.
   std::vector<ClauseWithGlue> clause_candidates;
+  std::vector<int> unit_clauses;
   // How much data was already imported (in literals and zero terminators)
   size_t already_imported = 0;
 
@@ -296,7 +297,7 @@ void Internal::import_redundant_clauses (int& res) {
 
       // Handle clause of size >= 2 being learnt
       // (unit clauses are handled below)
-      if (clause.size () >= 2) {
+      if (currentClause.size () >= 2) {
         clause_candidates.push_back({currentClause, glue});
         unitLit = 0;
       }
@@ -306,23 +307,32 @@ void Internal::import_redundant_clauses (int& res) {
 
     // Try to learn unit clause
     if (unitLit != 0) {
-      bool add = true;
-      if (external->marked (external->witness, unitLit)) {
-        // Do not learn unit clause if marked as witness
-        continue;
-      }
-      int ilit = external->internalize (unitLit);
-      auto& f = flags(ilit);
-      if (f.eliminated () || f.substituted ()) {
-        // Do not import eliminated or substituted literal
-        continue;
-      }
-      // Do not import units which are already fixed
-      if (f.status == Flags::FIXED) continue;
-      // Actually add the unit clause
-      if (add) assign_original_unit (ilit);
+      unit_clauses.push_back(unitLit);
       already_imported += 2; // imported one literals and its zero terminator.
     }
+  }
+
+  // First we import non-unit clauses
+  import_useful_clauses(res, this, clause_candidates, already_imported);
+
+  // Then we import unit clauses
+  // Other orders can cause assertions to fail inside the two-watched-literals data structure.
+  for (auto unit_cls : unit_clauses) {
+    bool add = true;
+    if (external->marked (external->witness, unit_cls)) {
+      // Do not learn unit clause if marked as witness
+      continue;
+    }
+    int ilit = external->internalize (unit_cls);
+    auto& f = flags(ilit);
+    if (f.eliminated () || f.substituted ()) {
+      // Do not import eliminated or substituted literal
+      continue;
+    }
+    // Do not import units which are already fixed
+    if (f.status == Flags::FIXED) continue;
+    // Actually add the unit clause
+    if (add) assign_original_unit (ilit);
 
     // Stop importing if SAT or UNSAT was found
     if (unsat) {
@@ -334,8 +344,6 @@ void Internal::import_redundant_clauses (int& res) {
       return;
     }
   }
-
-  import_useful_clauses(res, this, clause_candidates, already_imported);
 }
 
 }
